@@ -27,7 +27,7 @@ const Dashboard = () => {
         navigate('/chef/kitchen');
         break;
       case 'admin':
-        // Stay on dashboard
+        navigate('/admin');
         break;
     }
   }, [user, navigate]);

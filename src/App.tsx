@@ -9,6 +9,11 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import DashboardHome from "./pages/admin/DashboardHome";
+import StaffManagement from "./pages/admin/StaffManagement";
+import MenuManagement from "./pages/admin/MenuManagement";
+import TableManagement from "./pages/admin/TableManagement";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +29,20 @@ const App = () => (
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<DashboardHome />} />
+                <Route path="staff" element={<StaffManagement />} />
+                <Route path="chefs" element={<StaffManagement />} />
+                <Route path="menu" element={<MenuManagement />} />
+                <Route path="tables" element={<TableManagement />} />
+                <Route path="bookings" element={<div className="text-center text-muted-foreground py-12">Bookings page coming soon...</div>} />
+                <Route path="orders" element={<div className="text-center text-muted-foreground py-12">Orders page coming soon...</div>} />
+                <Route path="reports" element={<div className="text-center text-muted-foreground py-12">Reports page coming soon...</div>} />
+                <Route path="settings" element={<div className="text-center text-muted-foreground py-12">Settings page coming soon...</div>} />
+              </Route>
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
