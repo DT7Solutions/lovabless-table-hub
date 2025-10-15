@@ -122,3 +122,16 @@ export interface ItemRating {
   comment?: string;
   createdAt: string;
 }
+
+export type DeviceStatus = 'active' | 'inactive' | 'maintenance';
+
+export interface Device {
+  id: string;
+  serialNumber: string;
+  deviceModel: string;
+  status: DeviceStatus;
+  assignedWaiterId?: string;
+  assignmentDate?: string;
+  notes?: string;
+  createdAt: string;
+}

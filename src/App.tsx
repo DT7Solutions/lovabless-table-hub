@@ -14,6 +14,7 @@ import DashboardHome from "./pages/admin/DashboardHome";
 import StaffManagement from "./pages/admin/StaffManagement";
 import MenuManagement from "./pages/admin/MenuManagement";
 import TableManagement from "./pages/admin/TableManagement";
+import DeviceManagement from "./pages/admin/DeviceManagement";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="chefs" element={<StaffManagement />} />
                 <Route path="menu" element={<MenuManagement />} />
                 <Route path="tables" element={<TableManagement />} />
+                <Route path="devices" element={<DeviceManagement />} />
                 <Route path="bookings" element={<div className="text-center text-muted-foreground py-12">Bookings page coming soon...</div>} />
                 <Route path="orders" element={<div className="text-center text-muted-foreground py-12">Orders page coming soon...</div>} />
                 <Route path="reports" element={<div className="text-center text-muted-foreground py-12">Reports page coming soon...</div>} />

@@ -13,7 +13,8 @@ import {
   LogOut,
   Menu,
   X,
-  Bell
+  Bell,
+  Tablet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Chef Management', href: '/admin/chefs', icon: ChefHat },
   { name: 'Menu Management', href: '/admin/menu', icon: UtensilsCrossed },
   { name: 'Table Management', href: '/admin/tables', icon: LayoutGrid },
+  { name: 'Devices', href: '/admin/devices', icon: Tablet },
   { name: 'Bookings', href: '/admin/bookings', icon: Calendar },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
