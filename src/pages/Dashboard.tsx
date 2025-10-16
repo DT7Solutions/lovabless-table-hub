@@ -18,13 +18,13 @@ const Dashboard = () => {
     // Role-based navigation
     switch (user.role) {
       case 'customer':
-        navigate('/customer/menu');
+        // Customer portal coming soon
         break;
       case 'waiter':
-        navigate('/waiter/orders');
+        navigate('/waiter');
         break;
       case 'chef':
-        navigate('/chef/kitchen');
+        navigate('/chef');
         break;
       case 'admin':
         navigate('/admin');

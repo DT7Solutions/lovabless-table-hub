@@ -15,6 +15,8 @@ import StaffManagement from "./pages/admin/StaffManagement";
 import MenuManagement from "./pages/admin/MenuManagement";
 import TableManagement from "./pages/admin/TableManagement";
 import DeviceManagement from "./pages/admin/DeviceManagement";
+import WaiterDashboard from "./pages/WaiterDashboard";
+import ChefDashboard from "./pages/ChefDashboard";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,12 @@ const App = () => (
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Waiter Routes */}
+              <Route path="/waiter" element={<WaiterDashboard />} />
+              
+              {/* Chef Routes */}
+              <Route path="/chef" element={<ChefDashboard />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminLayout />}>
