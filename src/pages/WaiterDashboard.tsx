@@ -21,12 +21,16 @@ export default function WaiterDashboard() {
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [orderCart, setOrderCart] = useState<{ item: MenuItem; quantity: number; customization: string }[]>([]);
+  const [orderCart, setOrderCart] = useState<{ item: MenuItem; quantity: number; customization: string; cookingInstructions: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showMenuDialog, setShowMenuDialog] = useState(false);
   const [showBillDialog, setShowBillDialog] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [itemQuantity, setItemQuantity] = useState(1);
+  const [itemCustomizations, setItemCustomizations] = useState<string[]>([]);
+  const [itemCookingInstructions, setItemCookingInstructions] = useState('');
 
   // Get active order for selected table
   const activeOrder = orders.find(o => o.tableId === selectedTable?.id && o.status !== 'served' && o.status !== 'cancelled');
@@ -51,20 +55,55 @@ export default function WaiterDashboard() {
     toast({ title: "Success", description: `Table ${selectedTable.tableNumber} assigned` });
   };
 
-  const addToCart = (item: MenuItem) => {
-    const existing = orderCart.find(c => c.item.id === item.id);
-    if (existing) {
-      setOrderCart(orderCart.map(c => 
-        c.item.id === item.id ? { ...c, quantity: c.quantity + 1 } : c
-      ));
-    } else {
-      setOrderCart([...orderCart, { item, quantity: 1, customization: '' }]);
-    }
+  const openItemDetails = (item: MenuItem) => {
+    setSelectedMenuItem(item);
+    setItemQuantity(1);
+    setItemCustomizations([]);
+    setItemCookingInstructions('');
   };
 
-  const updateQuantity = (itemId: string, delta: number) => {
-    setOrderCart(orderCart.map(c => {
-      if (c.item.id === itemId) {
+  const addItemToCart = () => {
+    if (!selectedMenuItem) return;
+    
+    const customization = itemCustomizations.join(', ');
+    const existing = orderCart.find(c => 
+      c.item.id === selectedMenuItem.id && 
+      c.customization === customization && 
+      c.cookingInstructions === itemCookingInstructions
+    );
+    
+    if (existing) {
+      setOrderCart(orderCart.map(c => 
+        c.item.id === selectedMenuItem.id && 
+        c.customization === customization && 
+        c.cookingInstructions === itemCookingInstructions
+          ? { ...c, quantity: c.quantity + itemQuantity }
+          : c
+      ));
+    } else {
+      setOrderCart([...orderCart, { 
+        item: selectedMenuItem, 
+        quantity: itemQuantity, 
+        customization,
+        cookingInstructions: itemCookingInstructions 
+      }]);
+    }
+    
+    setSelectedMenuItem(null);
+    toast({ title: "Success", description: `${selectedMenuItem.name} added to cart` });
+  };
+
+  const toggleCustomization = (option: string) => {
+    setItemCustomizations(prev => 
+      prev.includes(option) 
+        ? prev.filter(o => o !== option)
+        : [...prev, option]
+    );
+  };
+
+  const updateQuantity = (index: number, delta: number) => {
+    setOrderCart(orderCart.map((c, idx) => {
+      if (idx === index) {
         const newQty = c.quantity + delta;
         return newQty > 0 ? { ...c, quantity: newQty } : c;
       }
@@ -72,10 +111,8 @@ export default function WaiterDashboard() {
     }).filter(c => c.quantity > 0));
   };
 
-  const updateCustomization = (itemId: string, customization: string) => {
-    setOrderCart(orderCart.map(c => 
-      c.item.id === itemId ? { ...c, customization } : c
-    ));
+  const removeFromCart = (index: number) => {
+    setOrderCart(orderCart.filter((_, idx) => idx !== index));
   };
 
   const submitOrder = () => {
@@ -90,7 +127,10 @@ export default function WaiterDashboard() {
       itemId: c.item.id,
       quantity: c.quantity,
       status: 'pending',
-      customizations: c.customization ? [c.customization] : [],
+      customizations: [
+        ...(c.customization ? [c.customization] : []),
+        ...(c.cookingInstructions ? [`Instructions: ${c.cookingInstructions}`] : [])
+      ],
       createdAt: new Date().toISOString()
     }));
 
@@ -352,13 +392,24 @@ export default function WaiterDashboard() {
                     <ScrollArea className="h-96">
                       <div className="grid grid-cols-2 gap-4">
                         {filteredItems.map(item => (
-                          <Card key={item.id} className="p-4 cursor-pointer hover:shadow-lg" onClick={() => addToCart(item)}>
+                          <Card 
+                            key={item.id} 
+                            className="p-4 cursor-pointer hover:shadow-lg transition-all" 
+                            onClick={() => openItemDetails(item)}
+                          >
                             {item.image && (
                               <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
                             )}
                             <h3 className="font-semibold">{item.name}</h3>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                             <p className="text-lg font-bold mt-2">₹{item.price}</p>
+                            <Button size="sm" className="w-full mt-2" onClick={(e) => {
+                              e.stopPropagation();
+                              openItemDetails(item);
+                            }}>
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add to Cart
+                            </Button>
                           </Card>
                         ))}
                       </div>
@@ -366,40 +417,160 @@ export default function WaiterDashboard() {
 
                     {orderCart.length > 0 && (
                       <div className="space-y-2 border-t pt-4">
-                        <h3 className="font-semibold">Order Cart</h3>
-                        {orderCart.map(c => (
-                          <Card key={c.item.id} className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <div className="font-medium">{c.item.name}</div>
-                                <div className="text-sm text-muted-foreground">₹{c.item.price} × {c.quantity}</div>
+                        <h3 className="font-semibold">Order Cart ({orderCart.length} items)</h3>
+                        <ScrollArea className="max-h-64">
+                          {orderCart.map((c, idx) => (
+                            <Card key={`${c.item.id}-${idx}`} className="p-3 mb-2">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="font-medium">{c.item.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    ₹{c.item.price} × {c.quantity} = ₹{c.item.price * c.quantity}
+                                  </div>
+                                  {c.customization && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      🔹 {c.customization}
+                                    </div>
+                                  )}
+                                  {c.cookingInstructions && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      📝 {c.cookingInstructions}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => updateQuantity(idx, -1)}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-8 text-center font-medium">{c.quantity}</span>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => updateQuantity(idx, 1)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    onClick={() => removeFromCart(idx)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" onClick={() => updateQuantity(c.item.id, -1)}>
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center">{c.quantity}</span>
-                                <Button size="sm" variant="outline" onClick={() => updateQuantity(c.item.id, 1)}>
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                            <Textarea
-                              placeholder="Customization (spice level, cooking instructions, etc.)"
-                              value={c.customization}
-                              onChange={(e) => updateCustomization(c.item.id, e.target.value)}
-                              className="text-sm"
-                              rows={2}
-                            />
-                          </Card>
-                        ))}
-                        <Button className="w-full" onClick={submitOrder}>
+                            </Card>
+                          ))}
+                        </ScrollArea>
+                        <div className="flex justify-between items-center p-3 bg-muted rounded">
+                          <span className="font-semibold">Total:</span>
+                          <span className="text-xl font-bold">
+                            ₹{orderCart.reduce((sum, c) => sum + c.item.price * c.quantity, 0)}
+                          </span>
+                        </div>
+                        <Button className="w-full" size="lg" onClick={submitOrder}>
                           <ShoppingCart className="h-4 w-4 mr-2" />
-                          Submit Order (₹{orderCart.reduce((sum, c) => sum + c.item.price * c.quantity, 0)})
+                          Submit Order to Kitchen
                         </Button>
                       </div>
                     )}
                   </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Item Details Dialog */}
+              <Dialog open={!!selectedMenuItem} onOpenChange={(open) => !open && setSelectedMenuItem(null)}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Customize Your Order</DialogTitle>
+                  </DialogHeader>
+                  {selectedMenuItem && (
+                    <div className="space-y-6">
+                      {/* Item Info */}
+                      <div className="flex gap-4">
+                        {selectedMenuItem.image && (
+                          <img 
+                            src={selectedMenuItem.image} 
+                            alt={selectedMenuItem.name} 
+                            className="w-32 h-32 object-cover rounded-lg"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold">{selectedMenuItem.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedMenuItem.description}</p>
+                          <p className="text-2xl font-bold mt-2">₹{selectedMenuItem.price}</p>
+                        </div>
+                      </div>
+
+                      {/* Quantity */}
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Quantity</Label>
+                        <div className="flex items-center gap-4">
+                          <Button 
+                            size="lg" 
+                            variant="outline" 
+                            onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="text-2xl font-bold w-12 text-center">{itemQuantity}</span>
+                          <Button 
+                            size="lg" 
+                            variant="outline" 
+                            onClick={() => setItemQuantity(itemQuantity + 1)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <span className="ml-auto text-xl font-bold">
+                            ₹{selectedMenuItem.price * itemQuantity}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Customizations */}
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Customizations (Optional)</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['Extra Spicy', 'Medium Spicy', 'Mild', 'No Onion', 'No Garlic', 'Extra Cheese', 'Less Oil', 'Well Done'].map(option => (
+                            <Button
+                              key={option}
+                              variant={itemCustomizations.includes(option) ? 'default' : 'outline'}
+                              className="justify-start"
+                              onClick={() => toggleCustomization(option)}
+                            >
+                              {itemCustomizations.includes(option) ? <Check className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                              {option}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Cooking Instructions */}
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Special Cooking Instructions (Optional)</Label>
+                        <Textarea
+                          placeholder="E.g., 'Please make it less oily', 'Extra sauce on the side', etc."
+                          value={itemCookingInstructions}
+                          onChange={(e) => setItemCookingInstructions(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Add to Cart Button */}
+                      <Button 
+                        className="w-full" 
+                        size="lg" 
+                        onClick={addItemToCart}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Add to Cart - ₹{selectedMenuItem.price * itemQuantity}
+                      </Button>
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
 
