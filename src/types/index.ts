@@ -29,6 +29,7 @@ export interface Category {
   name: string;
   description: string;
   isActive: boolean;
+  displayOrder?: number;
   createdAt: string;
 }
 
@@ -40,6 +41,8 @@ export interface MenuItem {
   price: number;
   image?: string;
   isAvailable: boolean;
+  prepTime?: number;
+  isFeatured?: boolean;
   createdAt: string;
   averageRating?: number;
   totalRatings?: number;

@@ -43,7 +43,6 @@ const App = () => (
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<DashboardHome />} />
                 <Route path="staff" element={<StaffManagement />} />
-                <Route path="chefs" element={<StaffManagement />} />
                 <Route path="menu" element={<MenuManagement />} />
                 <Route path="tables" element={<TableManagement />} />
                 <Route path="devices" element={<DeviceManagement />} />

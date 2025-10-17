@@ -7,6 +7,12 @@ interface DataContextType {
   tables: Table[];
   orders: Order[];
   ratings: ItemRating[];
+  addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => void;
+  updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt'>>) => void;
+  deleteCategory: (id: string) => void;
+  addMenuItem: (menuItem: Omit<MenuItem, 'id' | 'createdAt'>) => void;
+  updateMenuItem: (id: string, menuItem: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => void;
+  deleteMenuItem: (id: string) => void;
   addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   updateOrderItemStatus: (orderId: string, itemId: string, status: OrderItem['status']) => void;
@@ -86,6 +92,56 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedRatings) {
       setRatings(JSON.parse(storedRatings));
     }
+  };
+
+  const addCategory = (categoryData: Omit<Category, 'id' | 'createdAt'>) => {
+    const newCategory: Category = {
+      ...categoryData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+    };
+    const updatedCategories = [...categories, newCategory];
+    setCategories(updatedCategories);
+    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+  };
+
+  const updateCategory = (id: string, categoryData: Partial<Omit<Category, 'id' | 'createdAt'>>) => {
+    const updatedCategories = categories.map(cat =>
+      cat.id === id ? { ...cat, ...categoryData } : cat
+    );
+    setCategories(updatedCategories);
+    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+  };
+
+  const deleteCategory = (id: string) => {
+    const updatedCategories = categories.filter(cat => cat.id !== id);
+    setCategories(updatedCategories);
+    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+  };
+
+  const addMenuItem = (menuItemData: Omit<MenuItem, 'id' | 'createdAt'>) => {
+    const newMenuItem: MenuItem = {
+      ...menuItemData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+    };
+    const updatedMenuItems = [...menuItems, newMenuItem];
+    setMenuItems(updatedMenuItems);
+    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
+  };
+
+  const updateMenuItem = (id: string, menuItemData: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => {
+    const updatedMenuItems = menuItems.map(item =>
+      item.id === id ? { ...item, ...menuItemData } : item
+    );
+    setMenuItems(updatedMenuItems);
+    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
+  };
+
+  const deleteMenuItem = (id: string) => {
+    const updatedMenuItems = menuItems.filter(item => item.id !== id);
+    setMenuItems(updatedMenuItems);
+    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
   };
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
@@ -172,6 +228,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tables,
       orders,
       ratings,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addMenuItem,
+      updateMenuItem,
+      deleteMenuItem,
       addOrder,
       updateOrderStatus,
       updateOrderItemStatus,

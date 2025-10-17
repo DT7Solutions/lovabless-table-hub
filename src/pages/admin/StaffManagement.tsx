@@ -117,6 +117,7 @@ export default function StaffManagement() {
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="Waiter">Waiter</SelectItem>
+                <SelectItem value="Chef">Chef</SelectItem>
                 <SelectItem value="Manager">Manager</SelectItem>
                 <SelectItem value="Cashier">Cashier</SelectItem>
               </SelectContent>
@@ -238,6 +239,7 @@ function StaffForm({ onClose }: { onClose: () => void }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="waiter">Waiter</SelectItem>
+            <SelectItem value="chef">Chef</SelectItem>
             <SelectItem value="manager">Manager</SelectItem>
             <SelectItem value="cashier">Cashier</SelectItem>
             <SelectItem value="cleaner">Cleaner</SelectItem>
