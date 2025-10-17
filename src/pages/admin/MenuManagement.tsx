@@ -4,20 +4,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Grid, List, Edit, Trash2, Star } from 'lucide-react';
+import { Plus, Search, Grid, List, Edit, Trash2, Star, FolderPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
+import { MenuItem, Category } from '@/types';
 
 export default function MenuManagement() {
-  const { categories, menuItems } = useData();
+  const { categories, menuItems, deleteCategory, deleteMenuItem } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'category' | 'item', id: string } | null>(null);
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -29,27 +35,101 @@ export default function MenuManagement() {
     return categories.find(c => c.id === categoryId)?.name || 'Unknown';
   };
 
+  const handleDelete = () => {
+    if (!deleteConfirm) return;
+    
+    if (deleteConfirm.type === 'category') {
+      const itemsInCategory = menuItems.filter(item => item.categoryId === deleteConfirm.id);
+      if (itemsInCategory.length > 0) {
+        toast({
+          title: "Cannot Delete",
+          description: "This category has menu items. Please delete or reassign items first.",
+          variant: "destructive",
+        });
+        setDeleteConfirm(null);
+        return;
+      }
+      deleteCategory(deleteConfirm.id);
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+    } else {
+      deleteMenuItem(deleteConfirm.id);
+      toast({
+        title: "Success",
+        description: "Menu item deleted successfully",
+      });
+    }
+    setDeleteConfirm(null);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setIsAddCategoryDialogOpen(true);
+  };
+
+  const handleEditMenuItem = (item: MenuItem) => {
+    setEditingMenuItem(item);
+    setIsAddItemDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Menu Management</h1>
-          <p className="text-muted-foreground">Manage your restaurant menu items</p>
+          <p className="text-muted-foreground">Manage your restaurant menu items and categories</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Menu Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Menu Item</DialogTitle>
-            </DialogHeader>
-            <MenuItemForm onClose={() => setIsAddDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={isAddCategoryDialogOpen} onOpenChange={(open) => {
+            setIsAddCategoryDialogOpen(open);
+            if (!open) setEditingCategory(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button size="lg" variant="outline">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+              </DialogHeader>
+              <CategoryForm 
+                category={editingCategory} 
+                onClose={() => {
+                  setIsAddCategoryDialogOpen(false);
+                  setEditingCategory(null);
+                }} 
+              />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isAddItemDialogOpen} onOpenChange={(open) => {
+            setIsAddItemDialogOpen(open);
+            if (!open) setEditingMenuItem(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Menu Item
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add New Menu Item'}</DialogTitle>
+              </DialogHeader>
+              <MenuItemForm 
+                menuItem={editingMenuItem}
+                onClose={() => {
+                  setIsAddItemDialogOpen(false);
+                  setEditingMenuItem(null);
+                }} 
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -112,14 +192,39 @@ export default function MenuManagement() {
         {categories.map(category => {
           const count = menuItems.filter(item => item.categoryId === category.id).length;
           return (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory(category.id)}
-              className="shrink-0"
-            >
-              {category.name} ({count})
-            </Button>
+            <div key={category.id} className="relative group shrink-0">
+              <Button
+                variant={selectedCategory === category.id ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category.id)}
+                className="pr-20"
+              >
+                {category.name} ({count})
+              </Button>
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditCategory(category);
+                  }}
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirm({ type: 'category', id: category.id });
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -152,10 +257,20 @@ export default function MenuManagement() {
                     </Badge>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleEditMenuItem(item)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -234,10 +349,20 @@ export default function MenuManagement() {
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEditMenuItem(item)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -250,19 +375,196 @@ export default function MenuManagement() {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the {deleteConfirm?.type}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function MenuItemForm({ onClose }: { onClose: () => void }) {
-  const { categories } = useData();
+function CategoryForm({ category, onClose }: { category?: Category | null, onClose: () => void }) {
+  const { addCategory, updateCategory, categories } = useData();
+  const [name, setName] = useState(category?.name || '');
+  const [description, setDescription] = useState(category?.description || '');
+  const [isActive, setIsActive] = useState(category?.isActive ?? true);
+  const [displayOrder, setDisplayOrder] = useState(category?.displayOrder || 0);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim()) {
+      toast({
+        title: "Error",
+        description: "Category name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const duplicate = categories.find(
+      cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== category?.id
+    );
+    
+    if (duplicate) {
+      toast({
+        title: "Error",
+        description: "A category with this name already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (category) {
+      updateCategory(category.id, {
+        name: name.trim(),
+        description: description.trim(),
+        isActive,
+        displayOrder,
+      });
+      toast({
+        title: "Success",
+        description: "Category updated successfully",
+      });
+    } else {
+      addCategory({
+        name: name.trim(),
+        description: description.trim(),
+        isActive,
+        displayOrder,
+      });
+      toast({
+        title: "Success",
+        description: "Category added successfully",
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="cat-name">Category Name *</Label>
+        <Input 
+          id="cat-name" 
+          placeholder="Enter category name" 
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required 
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="cat-description">Description</Label>
+        <Textarea 
+          id="cat-description" 
+          placeholder="Describe the category"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="cat-order">Display Order</Label>
+        <Input 
+          id="cat-order" 
+          type="number" 
+          placeholder="0"
+          value={displayOrder}
+          onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
+        />
+        <p className="text-xs text-muted-foreground mt-1">Lower numbers appear first</p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="cat-active">Active Status</Label>
+        <Switch 
+          id="cat-active" 
+          checked={isActive}
+          onCheckedChange={setIsActive}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button type="submit" className="flex-1">
+          {category ? 'Update' : 'Add'} Category
+        </Button>
+        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+
+function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClose: () => void }) {
+  const { categories, addMenuItem, updateMenuItem, menuItems } = useData();
+  const [name, setName] = useState(menuItem?.name || '');
+  const [categoryId, setCategoryId] = useState(menuItem?.categoryId || '');
+  const [description, setDescription] = useState(menuItem?.description || '');
+  const [price, setPrice] = useState(menuItem?.price?.toString() || '');
+  const [prepTime, setPrepTime] = useState(menuItem?.prepTime?.toString() || '');
+  const [isAvailable, setIsAvailable] = useState(menuItem?.isAvailable ?? true);
+  const [isFeatured, setIsFeatured] = useState(menuItem?.isFeatured ?? false);
+  const [image, setImage] = useState(menuItem?.image || '');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Success",
-      description: "Menu item added successfully",
-    });
+    
+    if (!name.trim() || !categoryId || !description.trim() || !price) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid price",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const itemData = {
+      name: name.trim(),
+      categoryId,
+      description: description.trim(),
+      price: priceNum,
+      prepTime: prepTime ? parseInt(prepTime) : undefined,
+      isAvailable,
+      isFeatured,
+      image: image.trim() || undefined,
+    };
+
+    if (menuItem) {
+      updateMenuItem(menuItem.id, itemData);
+      toast({
+        title: "Success",
+        description: "Menu item updated successfully",
+      });
+    } else {
+      addMenuItem(itemData);
+      toast({
+        title: "Success",
+        description: "Menu item added successfully",
+      });
+    }
     onClose();
   };
 
@@ -270,17 +572,23 @@ function MenuItemForm({ onClose }: { onClose: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">Item Name *</Label>
-        <Input id="name" placeholder="Enter item name" required />
+        <Input 
+          id="name" 
+          placeholder="Enter item name" 
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required 
+        />
       </div>
 
       <div>
         <Label htmlFor="category">Category *</Label>
-        <Select required>
+        <Select value={categoryId} onValueChange={setCategoryId} required>
           <SelectTrigger>
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map(cat => (
+            {categories.filter(cat => cat.isActive).map(cat => (
               <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
             ))}
           </SelectContent>
@@ -289,32 +597,72 @@ function MenuItemForm({ onClose }: { onClose: () => void }) {
 
       <div>
         <Label htmlFor="description">Description *</Label>
-        <Textarea id="description" placeholder="Describe the item" required />
+        <Textarea 
+          id="description" 
+          placeholder="Describe the item"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required 
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="image">Image URL</Label>
+        <Input 
+          id="image" 
+          placeholder="https://example.com/image.jpg"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="price">Price (₹) *</Label>
-          <Input id="price" type="number" placeholder="0.00" required />
+          <Input 
+            id="price" 
+            type="number" 
+            step="0.01"
+            placeholder="0.00"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required 
+          />
         </div>
         <div>
           <Label htmlFor="prepTime">Prep Time (mins)</Label>
-          <Input id="prepTime" type="number" placeholder="15" />
+          <Input 
+            id="prepTime" 
+            type="number" 
+            placeholder="15"
+            value={prepTime}
+            onChange={(e) => setPrepTime(e.target.value)}
+          />
         </div>
       </div>
 
       <div className="flex items-center justify-between">
         <Label htmlFor="available">Available</Label>
-        <Switch id="available" defaultChecked />
+        <Switch 
+          id="available" 
+          checked={isAvailable}
+          onCheckedChange={setIsAvailable}
+        />
       </div>
 
       <div className="flex items-center justify-between">
         <Label htmlFor="featured">Featured Item</Label>
-        <Switch id="featured" />
+        <Switch 
+          id="featured" 
+          checked={isFeatured}
+          onCheckedChange={setIsFeatured}
+        />
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">Save Item</Button>
+        <Button type="submit" className="flex-1">
+          {menuItem ? 'Update' : 'Save'} Item
+        </Button>
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
       </div>
     </form>
