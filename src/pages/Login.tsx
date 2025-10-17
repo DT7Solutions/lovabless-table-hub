@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UtensilsCrossed } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -17,13 +18,31 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    const success = await login(username, password);
-    
-    if (success) {
-      navigate('/dashboard');
+
+    const loggedInUser = await login(email, password);
+
+    if (loggedInUser) { // loggedInUser is now User | null
+      switch (loggedInUser.role) {
+        case 'admin':
+        case 'client':
+          navigate('/admin');
+          break;
+        case 'waiter':
+          navigate('/waiter');
+          break;
+        case 'chef':
+          navigate('/chef');
+          break;
+        default:
+          toast({
+            title: 'Login Failed',
+            description: 'Invalid role. Contact admin.',
+            variant: 'destructive',
+          });
+          break;
+      }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -42,59 +61,17 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="min-h-[48px]"
-              />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required className="min-h-[48px]" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="min-h-[48px]"
-              />
+              <Input id="password" type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required className="min-h-[48px]" />
             </div>
-            <Button 
-              type="submit" 
-              className="w-full min-h-[48px]" 
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full min-h-[48px]" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          
-          <div className="mt-6 space-y-2 text-sm text-muted-foreground">
-            <p className="font-semibold">Demo Accounts:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 bg-muted rounded">
-                <p className="font-medium">Admin</p>
-                <p>admin / admin123</p>
-              </div>
-              <div className="p-2 bg-muted rounded">
-                <p className="font-medium">Waiter</p>
-                <p>waiter / waiter123</p>
-              </div>
-              <div className="p-2 bg-muted rounded">
-                <p className="font-medium">Chef</p>
-                <p>chef / chef123</p>
-              </div>
-              <div className="p-2 bg-muted rounded">
-                <p className="font-medium">Customer</p>
-                <p>customer / customer123</p>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

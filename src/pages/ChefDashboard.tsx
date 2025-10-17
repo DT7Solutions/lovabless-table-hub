@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,12 @@ import { Order, OrderItem } from '@/types';
 
 export default function ChefDashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();           
+    navigate('/login'); 
+  };
   const { orders, tables, menuItems, updateOrderItemStatus, getMenuItemById, getTableById } = useData();
   const [selectedTab, setSelectedTab] = useState('pending');
 
@@ -212,7 +219,7 @@ export default function ChefDashboard() {
             <div className="text-2xl font-bold">{readyOrders.length}</div>
             <div className="text-xs text-muted-foreground">Ready</div>
           </div>
-          <Button variant="outline" onClick={logout}>
+          <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,12 @@ import { Table, OrderItem, MenuItem } from '@/types';
 
 export default function WaiterDashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();           
+    navigate('/login'); 
+  };
   const { tables, menuItems, orders, categories, addOrder, updateOrderItemStatus, updateTableStatus, getMenuItemById } = useData();
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [customerName, setCustomerName] = useState('');
@@ -214,7 +221,7 @@ export default function WaiterDashboard() {
           <Button variant="outline" size="icon">
             <Bell className="h-4 w-4" />
           </Button>
-          <Button variant="outline" onClick={logout}>
+          <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>

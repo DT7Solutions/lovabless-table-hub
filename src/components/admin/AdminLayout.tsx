@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -37,6 +38,12 @@ export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();           
+    navigate('/login'); 
+  };
 
   return (
     <div className="flex h-screen w-full bg-background">
@@ -87,7 +94,7 @@ export function AdminLayout() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-3"
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {sidebarOpen && <span>Logout</span>}

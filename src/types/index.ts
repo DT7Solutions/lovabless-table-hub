@@ -1,4 +1,4 @@
-export type UserRole = 'customer' | 'waiter' | 'chef' | 'admin';
+export type UserRole = 'admin' | 'client' | 'waiter' | 'chef' | 'customer';
 
 export type OrderStatus = 'pending' | 'in_progress' | 'ready' | 'served' | 'cancelled';
 export type OrderItemStatus = 'pending' | 'in_progress' | 'ready';
@@ -9,7 +9,7 @@ export type PaymentMethod = 'cash' | 'card' | 'upi' | 'wallet';
 export interface User {
   id: string;
   firstName: string;
-  lastName: string;
+  lastName?: string;
   phone: string;
   email: string;
   username: string;

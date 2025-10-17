@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+import API_BASE_URL from '@/config';
+
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
   signup: (data: Omit<User, 'id' | 'createdAt' | 'isActive'>) => Promise<boolean>;
   isAuthenticated: boolean;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -20,146 +22,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-    } else {
-      initializeDefaultUsers();
     }
   }, []);
 
-  const initializeDefaultUsers = () => {
-    const users = localStorage.getItem('users');
-    if (!users) {
-      const defaultUsers: User[] = [
-        {
-          id: '1',
-          firstName: 'Admin',
-          lastName: 'User',
-          phone: '9999999999',
-          email: 'admin@restaurant.com',
-          username: 'admin',
-          role: 'admin',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          firstName: 'John',
-          lastName: 'Waiter',
-          phone: '9999999998',
-          email: 'waiter@restaurant.com',
-          username: 'waiter',
-          role: 'waiter',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          firstName: 'Chef',
-          lastName: 'Master',
-          phone: '9999999997',
-          email: 'chef@restaurant.com',
-          username: 'chef',
-          role: 'chef',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '4',
-          firstName: 'Guest',
-          lastName: 'Customer',
-          phone: '9999999996',
-          email: 'customer@restaurant.com',
-          username: 'customer',
-          role: 'customer',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      
-      const credentials = {
-        admin: 'admin123',
-        waiter: 'waiter123',
-        chef: 'chef123',
-        customer: 'customer123',
-      };
-      
-      localStorage.setItem('users', JSON.stringify(defaultUsers));
-      localStorage.setItem('credentials', JSON.stringify(credentials));
+  const mapApiRoleToUserRole = (apiRole: string): UserRole => {
+    switch (apiRole.toLowerCase()) {
+      case 'admin':
+      case 'client':
+        return 'admin';
+      case 'waiter':
+        return 'waiter';
+      case 'chef':
+        return 'chef';
+      default:
+        return 'customer';
     }
   };
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    const users: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-    const credentials = JSON.parse(localStorage.getItem('credentials') || '{}');
-    
-    const foundUser = users.find(u => u.username === username && u.isActive);
-    
-    if (foundUser && credentials[username] === password) {
-      setUser(foundUser);
-      localStorage.setItem('currentUser', JSON.stringify(foundUser));
+  const login = async (email: string, password: string): Promise<User | null> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}api/auth/login/`, { email, password }, { headers: { 'Content-Type': 'application/json' } });
+      if (response.status === 200) {
+        const data = response.data;
+        const role = mapApiRoleToUserRole(data.role);
+        const userData: User = {
+          id: data.user_id ? String(data.user_id) : '',
+          firstName: data.first_name || email.split('@')[0],
+          lastName: data.last_name || '',
+          email,
+          username: email,
+          role,
+          phone: data.phone || '',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
+        setUser(userData);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('accessToken', data.access);
+        localStorage.setItem('refreshToken', data.refresh);
+        toast({
+          title: 'Login Successful',
+          description: data.message || `Welcome back, ${userData.firstName}!`,
+        });
+        return userData;
+      }
+    } catch (error: any) {
       toast({
-        title: 'Login Successful',
-        description: `Welcome back, ${foundUser.firstName}!`,
+        title: 'Login Failed',
+        description: error.response?.data?.message || 'Invalid email or password',
+        variant: 'destructive',
       });
-      return true;
+      return null;
     }
-    
-    toast({
-      title: 'Login Failed',
-      description: 'Invalid username or password',
-      variant: 'destructive',
-    });
-    return false;
+    return null;
   };
 
   const signup = async (data: Omit<User, 'id' | 'createdAt' | 'isActive'>): Promise<boolean> => {
-    const users: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    if (users.some(u => u.username === data.username)) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}api/auth/register/`, data, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.status === 201) {
+        toast({
+          title: 'Signup Successful',
+          description: 'Your account has been created successfully.',
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
       toast({
         title: 'Signup Failed',
-        description: 'Username already exists',
+        description: error.response?.data?.message || 'Something went wrong.',
         variant: 'destructive',
       });
       return false;
     }
-    
-    const newUser: User = {
-      ...data,
-      id: Date.now().toString(),
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    toast({
-      title: 'Signup Successful',
-      description: 'Account created successfully!',
-    });
-    return true;
   };
-
   const logout = () => {
     setUser(null);
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     toast({
       title: 'Logged Out',
-      description: 'You have been logged out successfully',
+      description: 'You have been logged out successfully.',
     });
   };
 
+  const isAuthenticated = !!user;
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, signup, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, signup, isAuthenticated}}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
