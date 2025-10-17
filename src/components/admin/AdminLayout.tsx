@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Staff Management', href: '/admin/staff', icon: Users },
-  { name: 'Chef Management', href: '/admin/chefs', icon: ChefHat },
   { name: 'Menu Management', href: '/admin/menu', icon: UtensilsCrossed },
   { name: 'Table Management', href: '/admin/tables', icon: LayoutGrid },
   { name: 'Devices', href: '/admin/devices', icon: Tablet },
