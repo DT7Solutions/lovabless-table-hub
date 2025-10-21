@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           firstName: data.first_name || email.split('@')[0],
           lastName: data.last_name || '',
           email,
-          username: email,
+          username: data.username || email,
           role,
           phone: data.phone || '',
           isActive: true,
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('refreshToken', data.refresh);
         toast({
           title: 'Login Successful',
-          description: data.message || `Welcome back, ${userData.firstName}!`,
+          description: `Welcome back, ${userData.username}!`,
         });
         return userData;
       }

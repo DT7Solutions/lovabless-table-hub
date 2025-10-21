@@ -118,7 +118,7 @@ export function AdminLayout() {
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user?.profileImage} />
-                <AvatarFallback>{user?.firstName[0]}{user?.lastName[0]}</AvatarFallback>
+                <AvatarFallback>{user?.username[0]}{user?.firstName[0]}{user?.lastName[0]}</AvatarFallback>
               </Avatar>
               <div className="hidden md:block">
                 <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
