@@ -29,13 +29,24 @@ export interface Category {
   name: string;
   description: string;
   isActive: boolean;
-  displayOrder?: number;
+  displayOrder: number;
+  createdAt: string;
+}
+
+export interface Subcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  displayOrder: number;
   createdAt: string;
 }
 
 export interface MenuItem {
   id: string;
   categoryId: string;
+  subcategoryId?: string;
   name: string;
   description: string;
   price: number;
@@ -43,6 +54,7 @@ export interface MenuItem {
   isAvailable: boolean;
   prepTime?: number;
   isFeatured?: boolean;
+  displayOrder: number;
   createdAt: string;
   averageRating?: number;
   totalRatings?: number;
