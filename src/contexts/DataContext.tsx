@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Category, Subcategory, MenuItem, Table, Order, OrderItem, ItemRating } from '@/types';
+import { Category, MenuItem, Table, Order, OrderItem, ItemRating } from '@/types';
 
 interface DataContextType {
   categories: Category[];
-  subcategories: Subcategory[];
   menuItems: MenuItem[];
   tables: Table[];
   orders: Order[];
@@ -11,9 +10,6 @@ interface DataContextType {
   addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => void;
   updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt'>>) => void;
   deleteCategory: (id: string) => void;
-  addSubcategory: (subcategory: Omit<Subcategory, 'id' | 'createdAt'>) => void;
-  updateSubcategory: (id: string, subcategory: Partial<Omit<Subcategory, 'id' | 'createdAt'>>) => void;
-  deleteSubcategory: (id: string) => void;
   addMenuItem: (menuItem: Omit<MenuItem, 'id' | 'createdAt'>) => void;
   updateMenuItem: (id: string, menuItem: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => void;
   deleteMenuItem: (id: string) => void;
@@ -31,7 +27,6 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -43,7 +38,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeData = () => {
     const storedCategories = localStorage.getItem('categories');
-    const storedSubcategories = localStorage.getItem('subcategories');
     const storedMenuItems = localStorage.getItem('menuItems');
     const storedTables = localStorage.getItem('tables');
     const storedOrders = localStorage.getItem('orders');
@@ -51,10 +45,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!storedCategories) {
       const defaultCategories: Category[] = [
-        { id: '1', name: 'Appetizers', description: 'Start your meal right', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
-        { id: '2', name: 'Main Course', description: 'Hearty main dishes', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
-        { id: '3', name: 'Desserts', description: 'Sweet treats', isActive: true, displayOrder: 3, createdAt: new Date().toISOString() },
-        { id: '4', name: 'Beverages', description: 'Refreshing drinks', isActive: true, displayOrder: 4, createdAt: new Date().toISOString() },
+        { id: '1', name: 'Appetizers', description: 'Start your meal right', isActive: true, createdAt: new Date().toISOString() },
+        { id: '2', name: 'Main Course', description: 'Hearty main dishes', isActive: true, createdAt: new Date().toISOString() },
+        { id: '3', name: 'Desserts', description: 'Sweet treats', isActive: true, createdAt: new Date().toISOString() },
+        { id: '4', name: 'Beverages', description: 'Refreshing drinks', isActive: true, createdAt: new Date().toISOString() },
       ];
       localStorage.setItem('categories', JSON.stringify(defaultCategories));
       setCategories(defaultCategories);
@@ -62,26 +56,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCategories(JSON.parse(storedCategories));
     }
 
-    if (!storedSubcategories) {
-      const defaultSubcategories: Subcategory[] = [
-        { id: '1', categoryId: '2', name: 'Biryani', description: 'Aromatic rice dishes', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
-        { id: '2', categoryId: '2', name: 'Meals', description: 'Complete meal combos', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
-        { id: '3', categoryId: '2', name: 'Fried Rice', description: 'Stir-fried rice varieties', isActive: true, displayOrder: 3, createdAt: new Date().toISOString() },
-      ];
-      localStorage.setItem('subcategories', JSON.stringify(defaultSubcategories));
-      setSubcategories(defaultSubcategories);
-    } else {
-      setSubcategories(JSON.parse(storedSubcategories));
-    }
-
     if (!storedMenuItems) {
       const defaultMenuItems: MenuItem[] = [
-        { id: '1', categoryId: '1', name: 'Spring Rolls', description: 'Crispy vegetable rolls', price: 120, isAvailable: true, displayOrder: 1, createdAt: new Date().toISOString(), averageRating: 4.5, totalRatings: 12 },
-        { id: '2', categoryId: '1', name: 'Paneer Tikka', description: 'Grilled cottage cheese', price: 180, isAvailable: true, displayOrder: 2, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 25 },
-        { id: '3', categoryId: '2', subcategoryId: '1', name: 'Chicken Biryani', description: 'Aromatic basmati rice with chicken', price: 280, isAvailable: true, displayOrder: 1, createdAt: new Date().toISOString(), averageRating: 4.9, totalRatings: 45 },
-        { id: '4', categoryId: '2', subcategoryId: '3', name: 'Veg Fried Rice', description: 'Chinese style fried rice', price: 180, isAvailable: true, displayOrder: 1, createdAt: new Date().toISOString(), averageRating: 4.6, totalRatings: 30 },
-        { id: '5', categoryId: '3', name: 'Gulab Jamun', description: 'Sweet milk dumplings', price: 80, isAvailable: true, displayOrder: 1, createdAt: new Date().toISOString(), averageRating: 4.7, totalRatings: 18 },
-        { id: '6', categoryId: '4', name: 'Mango Lassi', description: 'Yogurt-based mango drink', price: 90, isAvailable: true, displayOrder: 1, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 22 },
+        { id: '1', categoryId: '1', name: 'Spring Rolls', description: 'Crispy vegetable rolls', price: 120, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.5, totalRatings: 12 },
+        { id: '2', categoryId: '1', name: 'Paneer Tikka', description: 'Grilled cottage cheese', price: 180, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 25 },
+        { id: '3', categoryId: '2', name: 'Butter Chicken', description: 'Rich and creamy curry', price: 320, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.9, totalRatings: 45 },
+        { id: '4', categoryId: '2', name: 'Dal Makhani', description: 'Black lentils in butter gravy', price: 220, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.6, totalRatings: 30 },
+        { id: '5', categoryId: '3', name: 'Gulab Jamun', description: 'Sweet milk dumplings', price: 80, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.7, totalRatings: 18 },
+        { id: '6', categoryId: '4', name: 'Mango Lassi', description: 'Yogurt-based mango drink', price: 90, isAvailable: true, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 22 },
       ];
       localStorage.setItem('menuItems', JSON.stringify(defaultMenuItems));
       setMenuItems(defaultMenuItems);
@@ -135,31 +117,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updatedCategories = categories.filter(cat => cat.id !== id);
     setCategories(updatedCategories);
     localStorage.setItem('categories', JSON.stringify(updatedCategories));
-  };
-
-  const addSubcategory = (subcategoryData: Omit<Subcategory, 'id' | 'createdAt'>) => {
-    const newSubcategory: Subcategory = {
-      ...subcategoryData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedSubcategories = [...subcategories, newSubcategory];
-    setSubcategories(updatedSubcategories);
-    localStorage.setItem('subcategories', JSON.stringify(updatedSubcategories));
-  };
-
-  const updateSubcategory = (id: string, subcategoryData: Partial<Omit<Subcategory, 'id' | 'createdAt'>>) => {
-    const updatedSubcategories = subcategories.map(sub =>
-      sub.id === id ? { ...sub, ...subcategoryData } : sub
-    );
-    setSubcategories(updatedSubcategories);
-    localStorage.setItem('subcategories', JSON.stringify(updatedSubcategories));
-  };
-
-  const deleteSubcategory = (id: string) => {
-    const updatedSubcategories = subcategories.filter(sub => sub.id !== id);
-    setSubcategories(updatedSubcategories);
-    localStorage.setItem('subcategories', JSON.stringify(updatedSubcategories));
   };
 
   const addMenuItem = (menuItemData: Omit<MenuItem, 'id' | 'createdAt'>) => {
@@ -267,7 +224,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <DataContext.Provider value={{
       categories,
-      subcategories,
       menuItems,
       tables,
       orders,
@@ -275,9 +231,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addCategory,
       updateCategory,
       deleteCategory,
-      addSubcategory,
-      updateSubcategory,
-      deleteSubcategory,
       addMenuItem,
       updateMenuItem,
       deleteMenuItem,
