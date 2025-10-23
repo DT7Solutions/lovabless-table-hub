@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Category, MenuItem, Table, Order, OrderItem, ItemRating } from '@/types';
+import axios from 'axios';
+import API_BASE_URL from '@/config';
 
+const access = localStorage.getItem('accessToken'); 
+// if (!access) throw new Error('User is not authenticated');
 interface DataContextType {
   categories: Category[];
   menuItems: MenuItem[];
@@ -119,15 +123,62 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('categories', JSON.stringify(updatedCategories));
   };
 
-  const addMenuItem = (menuItemData: Omit<MenuItem, 'id' | 'createdAt'>) => {
-    const newMenuItem: MenuItem = {
-      ...menuItemData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedMenuItems = [...menuItems, newMenuItem];
-    setMenuItems(updatedMenuItems);
-    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
+  // ================== Dummy data for menu item ==================
+  const addMenuItem = async (formValues = {}) => {
+    debugger;
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      console.log("Using access token:", token);
+
+      // Define dummy/default values
+      const defaultItemData = {
+        main_category_id: 1,
+        sub_category_id: 1,
+        name: "Test Grilled Chicken Burger",
+        description: "A tasty test burger for API testing",
+        prepare_time: 15,
+        variant_type: "Non-Veg",
+        quantity_value: 1.0,
+        quantity_unit: "item",
+        price: 249.99,
+        currency_symbol: "$",
+        tax_percentage: 5.0,
+        stock_available: 50,
+        is_available: true,
+        is_active: true,
+        max_order_quantity: 5,
+        offers: [1, 2],
+        customizations: "Extra cheese, no onions",
+      };
+
+      // Merge formValues with defaultItemData
+      const menuItemData = { ...defaultItemData, ...formValues };
+
+      const response = await axios.post(
+        `${API_BASE_URL}api/restaurant/product-items/create/`,
+        menuItemData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Menu item added successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Add menu item failed:", error.response.data);
+      } else {
+        console.error("Error adding menu item:", error.message);
+      }
+      throw error;
+    }
   };
 
   const updateMenuItem = (id: string, menuItemData: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => {
