@@ -544,6 +544,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
     const itemData = {
       name: name.trim(),
       categoryId,
+      subcategoryId: 1,
       description: description.trim(),
       price: priceNum,
       prepTime: prepTime ? parseInt(prepTime) : undefined,

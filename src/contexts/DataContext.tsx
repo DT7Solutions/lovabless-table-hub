@@ -123,44 +123,62 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('categories', JSON.stringify(updatedCategories));
   };
 
-  // ================== Dummy data for menu item ==================
-  const addMenuItem = async (formValues = {}) => {
-    debugger;
+  const addMenuItem = async (newName) => {
     try {
+      debugger;
       const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("User not authenticated");
-      }
+      if (!token) throw new Error("User not authenticated");
 
-      console.log("Using access token:", token);
+      // const menuItemData = {
+      //   main_category_id: 1,
+      //   sub_category_id: 1,
+      //   name: newName,
+      //   slug: newName.toLowerCase().replace(/\s+/g, "-"),
+      //   description: "Special Biriyani",
+      //   prepare_time: 10,
+      //   variant_type: "Veg",
+      //   quantity_value: 1,
+      //   quantity_unit: "item",
+      //   price: 100.0,
+      //   currency_symbol: "$",
+      //   tax_percentage: 0.0,
+      //   stock_available: 0,
+      //   is_available: true,
+      //   is_active: true,
+      //   max_order_quantity: 5,
+      //   customizations: "",
+      //   offers: [], 
+      // };
 
-      // Define dummy/default values
-      const defaultItemData = {
-        main_category_id: 1,
-        sub_category_id: 1,
-        name: "Test Grilled Chicken Burger",
-        description: "A tasty test burger for API testing",
-        prepare_time: 15,
+      const productItem = {
+        id: 1,
+        main_category: 1,
+        sub_category: 1,
+        created_by: 6,
+        offers_details: 1,
+        name: "Chiken Biryani",
+        slug: "veg-biryani",
+        description: "Non Veg Biriyani",
+        prepare_time: 30,
         variant_type: "Non-Veg",
-        quantity_value: 1.0,
+        quantity_value: 1,
         quantity_unit: "item",
-        price: 249.99,
+        price: "200.00",
         currency_symbol: "$",
-        tax_percentage: 5.0,
-        stock_available: 50,
+        tax_percentage: "0.00",
+        stock_available: 0,
         is_available: true,
         is_active: true,
-        max_order_quantity: 5,
-        offers: [1, 2],
-        customizations: "Extra cheese, no onions",
+        max_order_quantity: 10,
+        customizations: "",
+        rating_avg: "0.0",
+        created_at: "2025-10-24T06:46:42.831916Z",
+        updated_at: "2025-10-24T06:46:42.846894Z"
       };
 
-      // Merge formValues with defaultItemData
-      const menuItemData = { ...defaultItemData, ...formValues };
-
       const response = await axios.post(
-        `${API_BASE_URL}api/restaurant/product-items/create/`,
-        menuItemData,
+        `${API_BASE_URL}api/restaurant/product-items/`,
+        productItem,
         {
           headers: {
             "Content-Type": "application/json",
@@ -172,11 +190,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Menu item added successfully:", response.data);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error("Add menu item failed:", error.response.data);
-      } else {
-        console.error("Error adding menu item:", error.message);
-      }
+      console.error("Error adding menu item:", error.message);
       throw error;
     }
   };
