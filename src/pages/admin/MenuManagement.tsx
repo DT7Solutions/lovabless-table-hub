@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Grid, List, Edit, Trash2, Star, FolderPlus } from 'lucide-react';
+import { Plus, Search, Grid, List, Edit, Trash2, Star, FolderPlus, Upload, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
@@ -12,18 +12,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
-import { MenuItem, Category } from '@/types';
+import { MenuItem, Category, SubCategory } from '@/types';
 
 export default function MenuManagement() {
-  const { categories, menuItems, deleteCategory, deleteMenuItem } = useData();
+  const { categories, subCategories, menuItems, deleteCategory, deleteSubCategory, deleteMenuItem } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [isAddSubCategoryDialogOpen, setIsAddSubCategoryDialogOpen] = useState(false);
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'category' | 'item', id: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'category' | 'subcategory' | 'item', id: string } | null>(null);
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -35,15 +37,21 @@ export default function MenuManagement() {
     return categories.find(c => c.id === categoryId)?.name || 'Unknown';
   };
 
+  const getSubCategoryName = (subCategoryId?: string) => {
+    if (!subCategoryId) return '';
+    return subCategories.find(sc => sc.id === subCategoryId)?.name || '';
+  };
+
   const handleDelete = () => {
     if (!deleteConfirm) return;
     
     if (deleteConfirm.type === 'category') {
       const itemsInCategory = menuItems.filter(item => item.categoryId === deleteConfirm.id);
-      if (itemsInCategory.length > 0) {
+      const subCatsInCategory = subCategories.filter(sc => sc.categoryId === deleteConfirm.id);
+      if (itemsInCategory.length > 0 || subCatsInCategory.length > 0) {
         toast({
           title: "Cannot Delete",
-          description: "This category has menu items. Please delete or reassign items first.",
+          description: "This category has items or subcategories. Please delete them first.",
           variant: "destructive",
         });
         setDeleteConfirm(null);
@@ -53,6 +61,22 @@ export default function MenuManagement() {
       toast({
         title: "Success",
         description: "Category deleted successfully",
+      });
+    } else if (deleteConfirm.type === 'subcategory') {
+      const itemsInSubCategory = menuItems.filter(item => item.subCategoryId === deleteConfirm.id);
+      if (itemsInSubCategory.length > 0) {
+        toast({
+          title: "Cannot Delete",
+          description: "This subcategory has menu items. Please delete or reassign them first.",
+          variant: "destructive",
+        });
+        setDeleteConfirm(null);
+        return;
+      }
+      deleteSubCategory(deleteConfirm.id);
+      toast({
+        title: "Success",
+        description: "Subcategory deleted successfully",
       });
     } else {
       deleteMenuItem(deleteConfirm.id);
@@ -67,6 +91,11 @@ export default function MenuManagement() {
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
     setIsAddCategoryDialogOpen(true);
+  };
+
+  const handleEditSubCategory = (subCategory: SubCategory) => {
+    setEditingSubCategory(subCategory);
+    setIsAddSubCategoryDialogOpen(true);
   };
 
   const handleEditMenuItem = (item: MenuItem) => {
@@ -89,18 +118,42 @@ export default function MenuManagement() {
             <DialogTrigger asChild>
               <Button size="lg" variant="outline">
                 <FolderPlus className="mr-2 h-4 w-4" />
-                Add Category
+                Add Main Category
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+                <DialogTitle>{editingCategory ? 'Edit Main Category' : 'Add New Main Category'}</DialogTitle>
               </DialogHeader>
               <CategoryForm 
                 category={editingCategory} 
                 onClose={() => {
                   setIsAddCategoryDialogOpen(false);
                   setEditingCategory(null);
+                }} 
+              />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAddSubCategoryDialogOpen} onOpenChange={(open) => {
+            setIsAddSubCategoryDialogOpen(open);
+            if (!open) setEditingSubCategory(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button size="lg" variant="outline">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                Add Sub Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingSubCategory ? 'Edit Sub Category' : 'Add New Sub Category'}</DialogTitle>
+              </DialogHeader>
+              <SubCategoryForm 
+                subCategory={editingSubCategory} 
+                onClose={() => {
+                  setIsAddSubCategoryDialogOpen(false);
+                  setEditingSubCategory(null);
                 }} 
               />
             </DialogContent>
@@ -116,7 +169,7 @@ export default function MenuManagement() {
                 Add Menu Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add New Menu Item'}</DialogTitle>
               </DialogHeader>
@@ -242,9 +295,14 @@ export default function MenuManagement() {
                     No Image
                   </div>
                 )}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex gap-1">
                   <Badge variant={item.isAvailable ? 'default' : 'secondary'}>
                     {item.isAvailable ? 'Available' : 'Out of Stock'}
+                  </Badge>
+                </div>
+                <div className="absolute top-2 left-2">
+                  <Badge variant={item.isActive ? 'default' : 'destructive'}>
+                    {item.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
               </div>
@@ -252,9 +310,16 @@ export default function MenuManagement() {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{item.name}</h3>
-                    <Badge variant="outline" className="text-xs mt-1">
-                      {getCategoryName(item.categoryId)}
-                    </Badge>
+                    <div className="flex gap-1 mt-1">
+                      <Badge variant="outline" className="text-xs">
+                        {getCategoryName(item.categoryId)}
+                      </Badge>
+                      {item.subCategoryId && (
+                        <Badge variant="outline" className="text-xs">
+                          {getSubCategoryName(item.subCategoryId)}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <Button 
@@ -279,7 +344,9 @@ export default function MenuManagement() {
                   {item.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">₹{item.price}</span>
+                  <span className="text-xl font-bold text-primary">
+                    {item.currencySymbol || '₹'}{item.price}
+                  </span>
                   {item.averageRating && (
                     <div className="flex items-center gap-1 text-sm">
                       <Star className="h-4 w-4 fill-warning text-warning" />
@@ -301,7 +368,9 @@ export default function MenuManagement() {
                   <tr className="text-left">
                     <th className="p-4 font-medium">Item</th>
                     <th className="p-4 font-medium">Category</th>
+                    <th className="p-4 font-medium">Sub Category</th>
                     <th className="p-4 font-medium">Price</th>
+                    <th className="p-4 font-medium">Stock</th>
                     <th className="p-4 font-medium">Rating</th>
                     <th className="p-4 font-medium">Status</th>
                     <th className="p-4 font-medium">Actions</th>
@@ -330,7 +399,13 @@ export default function MenuManagement() {
                       <td className="p-4">
                         <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge>
                       </td>
-                      <td className="p-4 font-semibold">₹{item.price}</td>
+                      <td className="p-4">
+                        {item.subCategoryId && (
+                          <Badge variant="outline">{getSubCategoryName(item.subCategoryId)}</Badge>
+                        )}
+                      </td>
+                      <td className="p-4 font-semibold">{item.currencySymbol || '₹'}{item.price}</td>
+                      <td className="p-4">{item.stockAvailable || 0}</td>
                       <td className="p-4">
                         {item.averageRating ? (
                           <div className="flex items-center gap-1">
@@ -343,9 +418,14 @@ export default function MenuManagement() {
                         )}
                       </td>
                       <td className="p-4">
-                        <Badge variant={item.isAvailable ? 'default' : 'secondary'}>
-                          {item.isAvailable ? 'Available' : 'Out of Stock'}
-                        </Badge>
+                        <div className="flex gap-1">
+                          <Badge variant={item.isAvailable ? 'default' : 'secondary'} className="text-xs">
+                            {item.isAvailable ? 'Avail' : 'Out'}
+                          </Badge>
+                          <Badge variant={item.isActive ? 'default' : 'destructive'} className="text-xs">
+                            {item.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
@@ -478,13 +558,14 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
       </div>
 
       <div>
-        <Label htmlFor="cat-order">Display Order</Label>
+        <Label htmlFor="cat-order">Display Order *</Label>
         <Input 
           id="cat-order" 
           type="number" 
           placeholder="0"
           value={displayOrder}
           onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
+          required
         />
         <p className="text-xs text-muted-foreground mt-1">Lower numbers appear first</p>
       </div>
@@ -508,16 +589,175 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
   );
 }
 
+function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory | null, onClose: () => void }) {
+  const { categories, subCategories, addSubCategory, updateSubCategory } = useData();
+  const [categoryId, setCategoryId] = useState(subCategory?.categoryId || '');
+  const [name, setName] = useState(subCategory?.name || '');
+  const [description, setDescription] = useState(subCategory?.description || '');
+  const [isActive, setIsActive] = useState(subCategory?.isActive ?? true);
+  const [displayOrder, setDisplayOrder] = useState(subCategory?.displayOrder || 0);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim() || !categoryId) {
+      toast({
+        title: "Error",
+        description: "Subcategory name and main category are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const duplicate = subCategories.find(
+      subCat => subCat.name.toLowerCase() === name.toLowerCase() && 
+      subCat.categoryId === categoryId &&
+      subCat.id !== subCategory?.id
+    );
+    
+    if (duplicate) {
+      toast({
+        title: "Error",
+        description: "A subcategory with this name already exists in this category",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (subCategory) {
+      updateSubCategory(subCategory.id, {
+        categoryId,
+        name: name.trim(),
+        description: description.trim(),
+        isActive,
+        displayOrder,
+      });
+      toast({
+        title: "Success",
+        description: "Subcategory updated successfully",
+      });
+    } else {
+      addSubCategory({
+        categoryId,
+        name: name.trim(),
+        description: description.trim(),
+        isActive,
+        displayOrder,
+      });
+      toast({
+        title: "Success",
+        description: "Subcategory added successfully",
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="main-category">Main Category *</Label>
+        <Select value={categoryId} onValueChange={setCategoryId} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Select main category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.filter(cat => cat.isActive).map(cat => (
+              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="subcat-name">Sub Category Name *</Label>
+        <Input 
+          id="subcat-name" 
+          placeholder="Enter subcategory name" 
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required 
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="subcat-description">Description</Label>
+        <Textarea 
+          id="subcat-description" 
+          placeholder="Describe the subcategory"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="subcat-order">Display Order *</Label>
+        <Input 
+          id="subcat-order" 
+          type="number" 
+          placeholder="0"
+          value={displayOrder}
+          onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
+          required
+        />
+        <p className="text-xs text-muted-foreground mt-1">Lower numbers appear first</p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="subcat-active">Active Status</Label>
+        <Switch 
+          id="subcat-active" 
+          checked={isActive}
+          onCheckedChange={setIsActive}
+        />
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button type="submit" className="flex-1">
+          {subCategory ? 'Update' : 'Add'} Subcategory
+        </Button>
+        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+
 function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClose: () => void }) {
-  const { categories, addMenuItem, updateMenuItem, menuItems } = useData();
+  const { categories, subCategories, addMenuItem, updateMenuItem } = useData();
   const [name, setName] = useState(menuItem?.name || '');
   const [categoryId, setCategoryId] = useState(menuItem?.categoryId || '');
+  const [subCategoryId, setSubCategoryId] = useState(menuItem?.subCategoryId || '');
   const [description, setDescription] = useState(menuItem?.description || '');
   const [price, setPrice] = useState(menuItem?.price?.toString() || '');
   const [prepTime, setPrepTime] = useState(menuItem?.prepTime?.toString() || '');
   const [isAvailable, setIsAvailable] = useState(menuItem?.isAvailable ?? true);
+  const [isActive, setIsActive] = useState(menuItem?.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(menuItem?.isFeatured ?? false);
   const [image, setImage] = useState(menuItem?.image || '');
+  const [imagePreview, setImagePreview] = useState(menuItem?.image || '');
+  const [variantType, setVariantType] = useState(menuItem?.variantType || '');
+  const [quantityValue, setQuantityValue] = useState(menuItem?.quantityValue?.toString() || '1');
+  const [quantityUnit, setQuantityUnit] = useState(menuItem?.quantityUnit || 'item');
+  const [currencySymbol, setCurrencySymbol] = useState(menuItem?.currencySymbol || '₹');
+  const [taxPercentage, setTaxPercentage] = useState(menuItem?.taxPercentage?.toString() || '0.00');
+  const [stockAvailable, setStockAvailable] = useState(menuItem?.stockAvailable?.toString() || '0');
+  const [maxOrderQuantity, setMaxOrderQuantity] = useState(menuItem?.maxOrderQuantity?.toString() || '');
+  const [displayOrder, setDisplayOrder] = useState(menuItem?.displayOrder?.toString() || '0');
+
+  const filteredSubCategories = subCategories.filter(sc => 
+    sc.categoryId === categoryId && sc.isActive
+  );
+
+  const handleCategoryChange = (newCategoryId: string) => {
+    setCategoryId(newCategoryId);
+    setSubCategoryId('');
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setImage(value);
+    setImagePreview(value);
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -544,13 +784,22 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
     const itemData = {
       name: name.trim(),
       categoryId,
-      subcategoryId: 1,
+      subCategoryId: subCategoryId || undefined,
       description: description.trim(),
       price: priceNum,
       prepTime: prepTime ? parseInt(prepTime) : undefined,
       isAvailable,
+      isActive,
       isFeatured,
       image: image.trim() || undefined,
+      variantType: variantType.trim() || undefined,
+      quantityValue: quantityValue ? parseFloat(quantityValue) : 1,
+      quantityUnit: quantityUnit || 'item',
+      currencySymbol: currencySymbol || '₹',
+      taxPercentage: taxPercentage ? parseFloat(taxPercentage) : 0,
+      stockAvailable: stockAvailable ? parseInt(stockAvailable) : 0,
+      maxOrderQuantity: maxOrderQuantity ? parseInt(maxOrderQuantity) : undefined,
+      displayOrder: displayOrder ? parseInt(displayOrder) : 0,
     };
 
     if (menuItem) {
@@ -571,29 +820,68 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Item Name *</Label>
-        <Input 
-          id="name" 
-          placeholder="Enter item name" 
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required 
-        />
+      {/* Product Image Section */}
+      <div className="space-y-2">
+        <Label htmlFor="image">Product Image</Label>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Input 
+              id="image" 
+              placeholder="https://example.com/image.jpg or paste image URL"
+              value={image}
+              onChange={handleImageChange}
+            />
+          </div>
+        </div>
+        {imagePreview && (
+          <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+              onError={() => setImagePreview('')}
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={() => {
+                setImage('');
+                setImagePreview('');
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div>
-        <Label htmlFor="category">Category *</Label>
-        <Select value={categoryId} onValueChange={setCategoryId} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.filter(cat => cat.isActive).map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Item Name *</Label>
+          <Input 
+            id="name" 
+            placeholder="Enter item name" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required 
+          />
+        </div>
+        <div>
+          <Label htmlFor="variant">Variant Type</Label>
+          <Select value={variantType} onValueChange={setVariantType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select variant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Veg">Veg</SelectItem>
+              <SelectItem value="Non-Veg">Non-Veg</SelectItem>
+              <SelectItem value="Vegan">Vegan</SelectItem>
+              <SelectItem value="Egg">Egg</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -603,23 +891,61 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
           placeholder="Describe the item"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          rows={3}
           required 
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="image">Image URL</Label>
-        <Input 
-          id="image" 
-          placeholder="https://example.com/image.jpg"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="price">Price (₹) *</Label>
+          <Label htmlFor="category">Main Category *</Label>
+          <Select value={categoryId} onValueChange={handleCategoryChange} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.filter(cat => cat.isActive).map(cat => (
+                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="subcategory">Sub Category</Label>
+          <Select 
+            value={subCategoryId} 
+            onValueChange={setSubCategoryId}
+            disabled={!categoryId || filteredSubCategories.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select subcategory" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredSubCategories.map(subCat => (
+                <SelectItem key={subCat.id} value={subCat.id}>{subCat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="currency">Currency *</Label>
+          <Select value={currencySymbol} onValueChange={setCurrencySymbol}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="₹">₹ (INR)</SelectItem>
+              <SelectItem value="$">$ (USD)</SelectItem>
+              <SelectItem value="€">€ (EUR)</SelectItem>
+              <SelectItem value="£">£ (GBP)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="price">Price *</Label>
           <Input 
             id="price" 
             type="number" 
@@ -629,6 +955,46 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
             onChange={(e) => setPrice(e.target.value)}
             required 
           />
+        </div>
+        <div>
+          <Label htmlFor="tax">Tax Percentage</Label>
+          <Input 
+            id="tax" 
+            type="number" 
+            step="0.01"
+            placeholder="0.00"
+            value={taxPercentage}
+            onChange={(e) => setTaxPercentage(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="quantity-val">Quantity Value</Label>
+          <Input 
+            id="quantity-val" 
+            type="number"
+            step="0.01"
+            placeholder="1"
+            value={quantityValue}
+            onChange={(e) => setQuantityValue(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="quantity-unit">Quantity Unit *</Label>
+          <Select value={quantityUnit} onValueChange={setQuantityUnit}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="item">item</SelectItem>
+              <SelectItem value="plate">plate</SelectItem>
+              <SelectItem value="kg">kg</SelectItem>
+              <SelectItem value="litre">litre</SelectItem>
+              <SelectItem value="piece">piece</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="prepTime">Prep Time (mins)</Label>
@@ -642,22 +1008,65 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Label htmlFor="available">Available</Label>
-        <Switch 
-          id="available" 
-          checked={isAvailable}
-          onCheckedChange={setIsAvailable}
-        />
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="stock">Stock Available</Label>
+          <Input 
+            id="stock" 
+            type="number" 
+            placeholder="0"
+            value={stockAvailable}
+            onChange={(e) => setStockAvailable(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="max-order">Max Order Qty</Label>
+          <Input 
+            id="max-order" 
+            type="number" 
+            placeholder="No limit"
+            value={maxOrderQuantity}
+            onChange={(e) => setMaxOrderQuantity(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="display-order">Display Order *</Label>
+          <Input 
+            id="display-order" 
+            type="number" 
+            placeholder="0"
+            value={displayOrder}
+            onChange={(e) => setDisplayOrder(e.target.value)}
+            required
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Label htmlFor="featured">Featured Item</Label>
-        <Switch 
-          id="featured" 
-          checked={isFeatured}
-          onCheckedChange={setIsFeatured}
-        />
+      <div className="grid grid-cols-3 gap-4 pt-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="active">Product Active</Label>
+          <Switch 
+            id="active" 
+            checked={isActive}
+            onCheckedChange={setIsActive}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="available">Availability</Label>
+          <Switch 
+            id="available" 
+            checked={isAvailable}
+            onCheckedChange={setIsAvailable}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="featured">Featured</Label>
+          <Switch 
+            id="featured" 
+            checked={isFeatured}
+            onCheckedChange={setIsFeatured}
+          />
+        </div>
       </div>
 
       <div className="flex gap-2 pt-4">

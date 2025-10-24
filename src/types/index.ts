@@ -29,20 +29,40 @@ export interface Category {
   name: string;
   description: string;
   isActive: boolean;
-  displayOrder?: number;
+  displayOrder: number;
+  createdAt: string;
+}
+
+export interface SubCategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  displayOrder: number;
   createdAt: string;
 }
 
 export interface MenuItem {
   id: string;
   categoryId: string;
+  subCategoryId?: string;
   name: string;
   description: string;
   price: number;
   image?: string;
   isAvailable: boolean;
+  isActive: boolean;
   prepTime?: number;
   isFeatured?: boolean;
+  variantType?: string;
+  quantityValue?: number;
+  quantityUnit?: string;
+  currencySymbol?: string;
+  taxPercentage?: number;
+  stockAvailable?: number;
+  maxOrderQuantity?: number;
+  displayOrder: number;
   createdAt: string;
   averageRating?: number;
   totalRatings?: number;
