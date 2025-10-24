@@ -3,8 +3,12 @@ import { Category, SubCategory, MenuItem, Table, Order, OrderItem, ItemRating } 
 import axios from 'axios';
 import API_BASE_URL from '@/config';
 
-const access = localStorage.getItem('accessToken'); 
-// if (!access) throw new Error('User is not authenticated');
+const token = localStorage.getItem("accessToken");
+const headers = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
+};
+
 interface DataContextType {
   categories: Category[];
   subCategories: SubCategory[];
@@ -12,8 +16,8 @@ interface DataContextType {
   tables: Table[];
   orders: Order[];
   ratings: ItemRating[];
-  addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => void;
-  updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt'>>) => void;
+  addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => Promise<Category>;
+  updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt'>>) => Promise<Category>;
   deleteCategory: (id: string) => void;
   addSubCategory: (subCategory: Omit<SubCategory, 'id' | 'createdAt'>) => void;
   updateSubCategory: (id: string, subCategory: Partial<Omit<SubCategory, 'id' | 'createdAt'>>) => void;
@@ -42,29 +46,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [ratings, setRatings] = useState<ItemRating[]>([]);
 
   useEffect(() => {
+    getCategories();
+    // getSubCategories();
+    // you can also call other data fetchers here if needed
     initializeData();
   }, []);
 
   const initializeData = () => {
-    const storedCategories = localStorage.getItem('categories');
     const storedSubCategories = localStorage.getItem('subCategories');
     const storedMenuItems = localStorage.getItem('menuItems');
     const storedTables = localStorage.getItem('tables');
     const storedOrders = localStorage.getItem('orders');
     const storedRatings = localStorage.getItem('ratings');
-
-    if (!storedCategories) {
-      const defaultCategories: Category[] = [
-        { id: '1', name: 'Appetizers', description: 'Start your meal right', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
-        { id: '2', name: 'Main Course', description: 'Hearty main dishes', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
-        { id: '3', name: 'Desserts', description: 'Sweet treats', isActive: true, displayOrder: 3, createdAt: new Date().toISOString() },
-        { id: '4', name: 'Beverages', description: 'Refreshing drinks', isActive: true, displayOrder: 4, createdAt: new Date().toISOString() },
-      ];
-      localStorage.setItem('categories', JSON.stringify(defaultCategories));
-      setCategories(defaultCategories);
-    } else {
-      setCategories(JSON.parse(storedCategories));
-    }
 
     if (!storedSubCategories) {
       const defaultSubCategories: SubCategory[] = [
@@ -116,30 +109,100 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRatings(JSON.parse(storedRatings));
     }
   };
+  
+  /* ========================= GET ALL CATEGORIES (GET) ========================= */
+  const getCategories = async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}api/restaurant/main-categories/`,
+        { headers }
+      );
+      // console.log("📦 Categories fetched:", response.data);
 
-  const addCategory = (categoryData: Omit<Category, 'id' | 'createdAt'>) => {
-    const newCategory: Category = {
-      ...categoryData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedCategories = [...categories, newCategory];
-    setCategories(updatedCategories);
-    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+      setCategories(response.data);
+      localStorage.setItem('categories', JSON.stringify(response.data));
+    } catch (error: any) {
+      console.error("❌ Error fetching categories:", error.response?.data || error.message);
+
+      const storedCategories = localStorage.getItem('categories');
+      if (storedCategories) {
+        setCategories(JSON.parse(storedCategories));
+      } else {
+        setCategories([]);
+      }
+    }
   };
 
-  const updateCategory = (id: string, categoryData: Partial<Omit<Category, 'id' | 'createdAt'>>) => {
-    const updatedCategories = categories.map(cat =>
-      cat.id === id ? { ...cat, ...categoryData } : cat
-    );
-    setCategories(updatedCategories);
-    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+  /* ========================= ADD CATEGORY (POST) ========================= */
+  const addCategory = async (categoryData: Omit<Category, 'id' | 'createdAt'>) => {
+    try {
+      if (!token) throw new Error("User not authenticated");
+
+      const payload = {
+        name: categoryData.name,
+        description: categoryData.description || "",
+        is_active: categoryData.isActive ?? true,
+        display_order: categoryData.displayOrder ?? 1,
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}api/restaurant/main-categories/`,
+        payload,
+        { headers }
+      );
+
+      const newCategory = response.data;
+      const updatedCategories = [...categories, newCategory];
+      setCategories(updatedCategories);
+      localStorage.setItem('categories', JSON.stringify(updatedCategories));
+
+      return newCategory;
+    } catch (error: any) {
+      console.error("❌ Error adding category:", error.response?.data || error.message);
+      throw error;
+    }
   };
 
-  const deleteCategory = (id: string) => {
-    const updatedCategories = categories.filter(cat => cat.id !== id);
-    setCategories(updatedCategories);
-    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+  /* ========================= UPDATE CATEGORY (PUT) ========================= */
+  const updateCategory = async ( id: string, categoryData: Partial<Omit<Category, 'id' | 'createdAt'>>) => {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}api/restaurant/main-categories/update/${id}/`,
+        categoryData,
+        { headers }
+      );
+
+      const updatedCategory = response.data;
+      const updatedCategories = categories.map(cat =>
+        cat.id === id ? updatedCategory : cat
+      );
+      setCategories(updatedCategories);
+      localStorage.setItem('categories', JSON.stringify(updatedCategories));
+
+      return updatedCategory;
+    } catch (error: any) {
+      console.error("❌ Error updating category:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  /* ========================= DELETE CATEGORY (DELETE) ========================= */
+  const deleteCategory = async (id: string) => {
+    try {
+      const response = await axios.delete(
+        `${API_BASE_URL}api/restaurant/main-categories/delete/${id}/`,
+        { headers }
+      );
+
+      const updatedCategories = categories.filter(cat => cat.id !== id);
+      setCategories(updatedCategories);
+      localStorage.setItem('categories', JSON.stringify(updatedCategories));
+
+      return true;
+    } catch (error: any) {
+      console.error("❌ Error deleting category:", error.response?.data || error.message);
+      throw error;
+    }
   };
 
   const addSubCategory = (subCategoryData: Omit<SubCategory, 'id' | 'createdAt'>) => {
@@ -167,10 +230,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
   };
 
-  const addMenuItem = async (newName) => {
+  const addMenuItem = async () => {
     try {
-      debugger;
-      const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("User not authenticated");
 
       // const menuItemData = {

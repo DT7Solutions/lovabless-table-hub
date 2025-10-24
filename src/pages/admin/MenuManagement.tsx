@@ -482,7 +482,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
   const [displayOrder, setDisplayOrder] = useState(category?.displayOrder || 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {  // <-- async here
     e.preventDefault();
     
     if (!name.trim()) {
@@ -497,7 +497,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
     const duplicate = categories.find(
       cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== category?.id
     );
-    
+
     if (duplicate) {
       toast({
         title: "Error",
@@ -507,30 +507,38 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
       return;
     }
 
-    if (category) {
-      updateCategory(category.id, {
-        name: name.trim(),
-        description: description.trim(),
-        isActive,
-        displayOrder,
-      });
+    try {
+      if (category) {
+        await updateCategory(category.id, {
+          name: name.trim(),
+          description: description.trim(),
+          isActive,
+          displayOrder,
+        });
+        toast({
+          title: "Success",
+          description: "Category updated successfully",
+        });
+      } else {
+        await addCategory({
+          name: name.trim(),
+          description: description.trim(),
+          isActive,
+          displayOrder,
+        });
+        toast({
+          title: "Success",
+          description: "Category added successfully",
+        });
+      }
+      onClose();
+    } catch (error: any) {
       toast({
-        title: "Success",
-        description: "Category updated successfully",
-      });
-    } else {
-      addCategory({
-        name: name.trim(),
-        description: description.trim(),
-        isActive,
-        displayOrder,
-      });
-      toast({
-        title: "Success",
-        description: "Category added successfully",
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
       });
     }
-    onClose();
   };
 
   return (
