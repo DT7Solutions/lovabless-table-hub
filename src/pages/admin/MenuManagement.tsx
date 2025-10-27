@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ export default function MenuManagement() {
   const { categories, subCategories, menuItems, deleteCategory, deleteSubCategory, deleteMenuItem } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedsubCategory, setSelectedsubCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
   const [isAddSubCategoryDialogOpen, setIsAddSubCategoryDialogOpen] = useState(false);
@@ -32,6 +33,11 @@ export default function MenuManagement() {
     const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  useEffect(() => {
+    setSelectedsubCategory("all");
+  }, [selectedCategory]);
+
 
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'Unknown';
@@ -189,43 +195,52 @@ export default function MenuManagement() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Input */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search menu items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+                <Input placeholder="Search menu items..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
               </div>
             </div>
+
+            {/* Category Select */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
+                {categories
+                  .filter((cat: any) => cat.is_active).map((cat: any) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
+
+            {/* Subcategory Select — Filtered by Category */}
+            <Select value={selectedsubCategory} onValueChange={setSelectedsubCategory} disabled={selectedCategory === "all"}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="All Sub Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sub Categories</SelectItem>
+                {subCategories
+                  .filter((sub: any) =>sub.is_active &&Number(sub.main_category) === Number(selectedCategory)).map((sub: any) => (
+                    <SelectItem key={sub.id} value={String(sub.id)}>
+                      {sub.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {/* View Mode Buttons */}
             <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-              >
+              <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")} >
                 <Grid className="h-4 w-4" />
               </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-              >
+              <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")} >
                 <List className="h-4 w-4" />
               </Button>
             </div>
@@ -669,8 +684,8 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
             <SelectValue placeholder="Select main category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.filter(cat => cat.isActive).map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+            {categories.filter((category: any ) => category.is_active).map((category: any) => (
+              <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -912,8 +927,8 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.filter(cat => cat.isActive).map(cat => (
-                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+              {categories.filter((category: any ) => category.is_active).map((category: any) => (
+                <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem>
               ))}
             </SelectContent>
           </Select>

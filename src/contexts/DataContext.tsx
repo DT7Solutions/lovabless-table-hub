@@ -46,31 +46,67 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [ratings, setRatings] = useState<ItemRating[]>([]);
 
   useEffect(() => {
+    // const getCategories = async () => {
+    //   try {
+    //     const response = await axios.get(
+    //       `${API_BASE_URL}api/restaurant/main-categories/`,
+    //       { headers }
+    //     );
+    //     console.log("📦 Categories fetched:", response.data);
+
+    //     setCategories(response.data);
+    //     localStorage.setItem("categories", JSON.stringify(response.data));
+    //   } catch (error: any) {
+    //     console.error(
+    //       "❌ Error fetching categories:",error.response?.data || error.message
+    //     );
+    //     const storedCategories = localStorage.getItem("categories");
+    //     if (storedCategories) {
+    //       setCategories(JSON.parse(storedCategories));
+    //     } else {
+    //       setCategories([]);
+    //     }
+    //   }
+    // };
     getCategories();
-    // getSubCategories();
-    // you can also call other data fetchers here if needed
+    getSubCategories();
+
     initializeData();
   }, []);
 
   const initializeData = () => {
-    const storedSubCategories = localStorage.getItem('subCategories');
+    const storedCategories = categories ;
+    const storedSubCategories = subCategories;
     const storedMenuItems = localStorage.getItem('menuItems');
     const storedTables = localStorage.getItem('tables');
     const storedOrders = localStorage.getItem('orders');
     const storedRatings = localStorage.getItem('ratings');
 
-    if (!storedSubCategories) {
-      const defaultSubCategories: SubCategory[] = [
-        { id: '1', categoryId: '1', name: 'Veg Starters', description: 'Vegetarian appetizers', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
-        { id: '2', categoryId: '1', name: 'Non-Veg Starters', description: 'Non-vegetarian appetizers', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
-        { id: '3', categoryId: '2', name: 'Biryani', description: 'Rice dishes', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
-        { id: '4', categoryId: '2', name: 'Curries', description: 'Gravy dishes', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
-      ];
-      localStorage.setItem('subCategories', JSON.stringify(defaultSubCategories));
-      setSubCategories(defaultSubCategories);
-    } else {
-      setSubCategories(JSON.parse(storedSubCategories));
-    }
+    // if (!storedCategories) {
+    //   const defaultCategories: Category[] = [
+    //     { id: '1', name: 'Appetizers', description: 'Start your meal right', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
+    //     { id: '2', name: 'Main Course', description: 'Hearty main dishes', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
+    //     { id: '3', name: 'Desserts', description: 'Sweet treats', isActive: true, displayOrder: 3, createdAt: new Date().toISOString() },
+    //     { id: '4', name: 'Beverages', description: 'Refreshing drinks', isActive: true, displayOrder: 4, createdAt: new Date().toISOString() },
+    //   ];
+    //   localStorage.setItem('categories', JSON.stringify(defaultCategories));
+    //   setCategories(defaultCategories);
+    // } else {
+    //   setCategories(JSON.parse(storedCategories));
+    // }
+
+    // if (!storedSubCategories) {
+    //   const defaultSubCategories: SubCategory[] = [
+    //     { id: '1', categoryId: '1', name: 'Veg Starters', description: 'Vegetarian appetizers', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
+    //     { id: '2', categoryId: '1', name: 'Non-Veg Starters', description: 'Non-vegetarian appetizers', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
+    //     { id: '3', categoryId: '2', name: 'Biryani', description: 'Rice dishes', isActive: true, displayOrder: 1, createdAt: new Date().toISOString() },
+    //     { id: '4', categoryId: '2', name: 'Curries', description: 'Gravy dishes', isActive: true, displayOrder: 2, createdAt: new Date().toISOString() },
+    //   ];
+    //   localStorage.setItem('subCategories', JSON.stringify(defaultSubCategories));
+    //   setSubCategories(defaultSubCategories);
+    // } else {
+    //   setSubCategories(JSON.parse(storedSubCategories));
+    // }
 
     if (!storedMenuItems) {
       const defaultMenuItems: MenuItem[] = [
@@ -117,7 +153,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         `${API_BASE_URL}api/restaurant/main-categories/`,
         { headers }
       );
-      // console.log("📦 Categories fetched:", response.data);
 
       setCategories(response.data);
       localStorage.setItem('categories', JSON.stringify(response.data));
@@ -205,29 +240,98 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addSubCategory = (subCategoryData: Omit<SubCategory, 'id' | 'createdAt'>) => {
-    const newSubCategory: SubCategory = {
-      ...subCategoryData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    const updatedSubCategories = [...subCategories, newSubCategory];
-    setSubCategories(updatedSubCategories);
-    localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+  /* ========================= GET ALL SUB-CATEGORIES (GET) ========================= */
+  const getSubCategories = async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}api/restaurant/sub-categories/`,
+        { headers }
+      );
+
+      setSubCategories(response.data);
+      localStorage.setItem('subCategories', JSON.stringify(response.data));
+    } catch (error: any) {
+      console.error("❌ Error fetching sub-categories:", error.response?.data || error.message);
+
+      const storedSubCategories = localStorage.getItem('subCategories');
+      if (storedSubCategories) {
+        setSubCategories(JSON.parse(storedSubCategories));
+      } else {
+        setSubCategories([]);
+      }
+    }
   };
 
-  const updateSubCategory = (id: string, subCategoryData: Partial<Omit<SubCategory, 'id' | 'createdAt'>>) => {
-    const updatedSubCategories = subCategories.map(subCat =>
-      subCat.id === id ? { ...subCat, ...subCategoryData } : subCat
-    );
-    setSubCategories(updatedSubCategories);
-    localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+  /* ========================= ADD SUB-CATEGORY (POST) ========================= */
+  const addSubCategory = async (subCategoryData: Omit<SubCategory, 'id' | 'createdAt'>) => {
+    try {
+      if (!token) throw new Error("User not authenticated");
+      const payload = {
+        name: subCategoryData.name,
+        description: subCategoryData.description || "",
+        is_active: subCategoryData.isActive ?? true,
+        display_order: subCategoryData.displayOrder ?? 1,
+        main_category: Number(subCategoryData.categoryId)
+      };
+      const response = await axios.post(
+        `${API_BASE_URL}api/restaurant/sub-categories/`,
+        payload,
+        { headers }
+      );
+      const newSubCategory = response.data;
+      const updatedSubCategories = [...subCategories, newSubCategory];
+      setSubCategories(updatedSubCategories);
+      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+
+      return newSubCategory;
+    } catch (error: any) {
+      console.error("❌ Error adding sub-category:", error.response?.data || error.message);
+      throw error;
+    }
   };
 
-  const deleteSubCategory = (id: string) => {
-    const updatedSubCategories = subCategories.filter(subCat => subCat.id !== id);
-    setSubCategories(updatedSubCategories);
-    localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+  /* ========================= UPDATE SUB-CATEGORY (PUT) ========================= */
+  const updateSubCategory = async (
+    id: string,
+    subCategoryData: Partial<Omit<SubCategory, 'id' | 'createdAt'>>
+  ) => {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}api/restaurant/sub-categories/update/${id}/`,
+        subCategoryData,
+        { headers }
+      );
+
+      const updatedSubCategory = response.data;
+      const updatedSubCategories = subCategories.map(sub =>
+        sub.id === id ? updatedSubCategory : sub
+      );
+      setSubCategories(updatedSubCategories);
+      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+
+      return updatedSubCategory;
+    } catch (error: any) {
+      console.error("❌ Error updating sub-category:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  /* ========================= DELETE SUB-CATEGORY (DELETE) ========================= */
+  const deleteSubCategory = async (id: string) => {
+    try {
+      const response = await axios.delete(
+        `${API_BASE_URL}api/restaurant/sub-categories/delete/${id}/`,
+        { headers }
+      );
+
+      const updatedSubCategories = subCategories.filter(sub => sub.id !== id);
+      setSubCategories(updatedSubCategories);
+      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
+      return true;
+    } catch (error: any) {
+      console.error("❌ Error deleting sub-category:", error.response?.data || error.message);
+      throw error;
+    }
   };
 
   const addMenuItem = async () => {
@@ -387,8 +491,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getMenuItemById = (id: string) => menuItems.find(item => item.id === id);
   const getTableById = (id: string) => tables.find(table => table.id === id);
 
-  const refreshData = () => {
-    initializeData();
+  const refreshData = async () => {
+    try {
+      await Promise.all([
+        getCategories(),
+        getSubCategories(),
+        // getMenuItems(),
+      ]);
+      console.log("✅ Data refreshed successfully");
+    } catch (error: any) {
+      console.error("❌ Error refreshing data:", error.message);
+    }
   };
 
   return (
