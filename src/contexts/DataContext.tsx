@@ -45,6 +45,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     getCategories();
     getSubCategories();
+    getMenuItems();
 
     initializeData();
     refreshData();
@@ -53,7 +54,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initializeData = () => {
     const storedCategories = categories ;
     const storedSubCategories = subCategories;
-    const storedMenuItems = localStorage.getItem('menuItems');
+    const storedMenuItems = menuItems;
     const storedTables = localStorage.getItem('tables');
     const storedOrders = localStorage.getItem('orders');
     const storedRatings = localStorage.getItem('ratings');
@@ -84,20 +85,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     //   setSubCategories(JSON.parse(storedSubCategories));
     // }
 
-    if (!storedMenuItems) {
-      const defaultMenuItems: MenuItem[] = [
-        { id: '1', categoryId: '1', subCategoryId: '1', name: 'Spring Rolls', description: 'Crispy vegetable rolls', price: 120, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 50, createdAt: new Date().toISOString(), averageRating: 4.5, totalRatings: 12 },
-        { id: '2', categoryId: '1', subCategoryId: '1', name: 'Paneer Tikka', description: 'Grilled cottage cheese', price: 180, isAvailable: true, isActive: true, displayOrder: 2, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 40, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 25 },
-        { id: '3', categoryId: '2', subCategoryId: '4', name: 'Butter Chicken', description: 'Rich and creamy curry', price: 320, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 30, createdAt: new Date().toISOString(), averageRating: 4.9, totalRatings: 45 },
-        { id: '4', categoryId: '2', subCategoryId: '4', name: 'Dal Makhani', description: 'Black lentils in butter gravy', price: 220, isAvailable: true, isActive: true, displayOrder: 2, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 45, createdAt: new Date().toISOString(), averageRating: 4.6, totalRatings: 30 },
-        { id: '5', categoryId: '3', name: 'Gulab Jamun', description: 'Sweet milk dumplings', price: 80, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 60, createdAt: new Date().toISOString(), averageRating: 4.7, totalRatings: 18 },
-        { id: '6', categoryId: '4', name: 'Mango Lassi', description: 'Yogurt-based mango drink', price: 90, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'litre', stockAvailable: 25, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 22 },
-      ];
-      localStorage.setItem('menuItems', JSON.stringify(defaultMenuItems));
-      setMenuItems(defaultMenuItems);
-    } else {
-      setMenuItems(JSON.parse(storedMenuItems));
-    }
+    // if (!storedMenuItems) {
+    //   const defaultMenuItems: MenuItem[] = [
+    //     { id: '1', categoryId: '1', subCategoryId: '1', name: 'Spring Rolls', description: 'Crispy vegetable rolls', price: 120, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 50, createdAt: new Date().toISOString(), averageRating: 4.5, totalRatings: 12 },
+    //     { id: '2', categoryId: '1', subCategoryId: '1', name: 'Paneer Tikka', description: 'Grilled cottage cheese', price: 180, isAvailable: true, isActive: true, displayOrder: 2, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 40, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 25 },
+    //     { id: '3', categoryId: '2', subCategoryId: '4', name: 'Butter Chicken', description: 'Rich and creamy curry', price: 320, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 30, createdAt: new Date().toISOString(), averageRating: 4.9, totalRatings: 45 },
+    //     { id: '4', categoryId: '2', subCategoryId: '4', name: 'Dal Makhani', description: 'Black lentils in butter gravy', price: 220, isAvailable: true, isActive: true, displayOrder: 2, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 45, createdAt: new Date().toISOString(), averageRating: 4.6, totalRatings: 30 },
+    //     { id: '5', categoryId: '3', name: 'Gulab Jamun', description: 'Sweet milk dumplings', price: 80, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'plate', stockAvailable: 60, createdAt: new Date().toISOString(), averageRating: 4.7, totalRatings: 18 },
+    //     { id: '6', categoryId: '4', name: 'Mango Lassi', description: 'Yogurt-based mango drink', price: 90, isAvailable: true, isActive: true, displayOrder: 1, currencySymbol: '₹', quantityUnit: 'litre', stockAvailable: 25, createdAt: new Date().toISOString(), averageRating: 4.8, totalRatings: 22 },
+    //   ];
+    //   localStorage.setItem('menuItems', JSON.stringify(defaultMenuItems));
+    //   setMenuItems(defaultMenuItems);
+    // } else {
+    //   setMenuItems(JSON.parse(storedMenuItems));
+    // }
 
     if (!storedTables) {
       const defaultTables: Table[] = [
@@ -228,88 +229,95 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addMenuItem = async () => {
+  /* ========================= GET ALL MENU ITEMS (GET) ========================= */
+  const getMenuItems = async () => {
     try {
-      if (!token) throw new Error("User not authenticated");
-
-      // const menuItemData = {
-      //   main_category_id: 1,
-      //   sub_category_id: 1,
-      //   name: newName,
-      //   slug: newName.toLowerCase().replace(/\s+/g, "-"),
-      //   description: "Special Biriyani",
-      //   prepare_time: 10,
-      //   variant_type: "Veg",
-      //   quantity_value: 1,
-      //   quantity_unit: "item",
-      //   price: 100.0,
-      //   currency_symbol: "$",
-      //   tax_percentage: 0.0,
-      //   stock_available: 0,
-      //   is_available: true,
-      //   is_active: true,
-      //   max_order_quantity: 5,
-      //   customizations: "",
-      //   offers: [], 
-      // };
-
-      const productItem = {
-        id: 1,
-        main_category: 1,
-        sub_category: 1,
-        created_by: 6,
-        offers_details: 1,
-        name: "Chiken Biryani",
-        slug: "veg-biryani",
-        description: "Non Veg Biriyani",
-        prepare_time: 30,
-        variant_type: "Non-Veg",
-        quantity_value: 1,
-        quantity_unit: "item",
-        price: "200.00",
-        currency_symbol: "$",
-        tax_percentage: "0.00",
-        stock_available: 0,
-        is_available: true,
-        is_active: true,
-        max_order_quantity: 10,
-        customizations: "",
-        rating_avg: "0.0",
-        created_at: "2025-10-24T06:46:42.831916Z",
-        updated_at: "2025-10-24T06:46:42.846894Z"
-      };
-
-      const response = await axios.post(
-        `${API_BASE_URL}api/restaurant/product-items/`,
-        productItem,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("Menu item added successfully:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error adding menu item:", error.message);
-      throw error;
+      const { data } = await axios.get(`${API_BASE_URL}api/restaurant/product-items/`, { headers });
+      setMenuItems(data);
+      console.log("✅ Menu Items loaded:", data);
+    } catch (err: any) {
+      console.error("❌ Error fetching menu items:", err.message);
     }
   };
 
-  const updateMenuItem = (id: string, menuItemData: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => {
-    const updatedMenuItems = menuItems.map(item =>
-      item.id === id ? { ...item, ...menuItemData } : item
-    );
-    setMenuItems(updatedMenuItems);
-    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
+  /* ========================= ADD MENU ITEM (POST) ========================= */
+  const addMenuItem = async (menuItem: Partial<MenuItem>): Promise<MenuItem> => {
+  try {
+    const payload = {
+      main_category: menuItem.categoryId,
+      sub_category: menuItem.subCategoryId,
+      name: menuItem.name,
+      description: menuItem.description || "",
+      price: menuItem.price ?? 100,
+      currency_symbol: menuItem.currencySymbol || "$",
+      tax_percentage: menuItem.taxPercentage ?? 0,
+      stock_available: menuItem.stockAvailable ?? 0,
+      is_available: menuItem.isAvailable ?? true,
+      is_active: menuItem.isActive ?? true,
+      prepare_time: menuItem.prepTime ?? 15,
+      variant_type: menuItem.variantType || "Veg",
+      quantity_value: menuItem.quantityValue ?? 1,
+      quantity_unit: menuItem.quantityUnit || "item",
+      max_order_quantity: menuItem.maxOrderQuantity ?? 5,
+      display_order: menuItem.displayOrder ?? 1,
+      is_featured: menuItem.isFeatured ?? false,
+      image: menuItem.image || "",
+      customizations: "",
+    };
+
+      const { data } = await axios.post(`${API_BASE_URL}api/restaurant/product-items/`, payload, { headers });
+      await getMenuItems(); 
+      console.log("✅ Menu Item added:", data);
+      return data;
+    } catch (err: any) {
+      console.error("❌ Error adding menu item:", err.message);
+      throw err;
+    }
   };
 
-  const deleteMenuItem = (id: string) => {
-    const updatedMenuItems = menuItems.filter(item => item.id !== id);
-    setMenuItems(updatedMenuItems);
-    localStorage.setItem('menuItems', JSON.stringify(updatedMenuItems));
+  /* ========================= UPDATE MENU ITEM (PUT) ========================= */
+  const updateMenuItem = async (id: string, menuItem: Partial<MenuItem>): Promise<MenuItem> => {
+    try {
+      const payload = {
+        main_category: menuItem.categoryId,
+        sub_category: menuItem.subCategoryId,
+        name: menuItem.name,
+        description: menuItem.description,
+        price: menuItem.price,
+        currency_symbol: menuItem.currencySymbol,
+        tax_percentage: menuItem.taxPercentage,
+        stock_available: menuItem.stockAvailable,
+        is_available: menuItem.isAvailable,
+        is_active: menuItem.isActive,
+        prepare_time: menuItem.prepTime,
+        variant_type: menuItem.variantType,
+        quantity_value: menuItem.quantityValue,
+        quantity_unit: menuItem.quantityUnit,
+        max_order_quantity: menuItem.maxOrderQuantity,
+        display_order: menuItem.displayOrder,
+        is_featured: menuItem.isFeatured,
+        image: menuItem.image,
+      };
+
+      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/product-items/update/${id}/`, payload, { headers });
+      await getMenuItems();
+      // console.log("✅ Menu Item updated:", data);
+      return data;
+    } catch (err: any) {
+      console.error("❌ Error updating menu item:", err.message);
+      throw err;
+    }
+  };
+
+  /* ========================= DELETE MENU ITEM (DELETE) ========================= */
+  const deleteMenuItem = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}api/restaurant/product-items/delete/${id}/`, { headers });
+      await getMenuItems();
+      // console.log("✅ Menu Item deleted:", id);
+    } catch (err: any) {
+      console.error("❌ Error deleting menu item:", err.message);
+    }
   };
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
@@ -388,7 +396,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /* ========================= REFRESH DATA (Reload all data from server) ========================= */
   const refreshData = async () => {
     try {
-      await Promise.all([getCategories(), getSubCategories()]);
+      await Promise.all([getCategories(), getSubCategories(), getMenuItems()]);
       // console.log("🔄 Data refreshed successfully");
     } catch (error: any) {
       console.error("❌ Error refreshing data:", error.message);

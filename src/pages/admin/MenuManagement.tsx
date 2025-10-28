@@ -46,14 +46,16 @@ export default function MenuManagement() {
     setSelectedsubCategory("all");
   }, [selectedCategory]);
 
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'Unknown';
+  const getCategoryName = (cat: any) => {
+    if (!cat) return "Unknown Category";
+    return typeof cat === "object" ? cat.name : 
+      categories.find((c) => Number(c.id) === Number(cat))?.name || "Unknown Category";
   };
 
-  const getSubCategoryName = (subCategoryId?: string) => {
-    if (!subCategoryId) return '';
-    return subCategories.find(sc => sc.id === subCategoryId)?.name || '';
+  const getSubCategoryName = (sub: any) => {
+    if (!sub) return "Unknown Subcategory";
+    return typeof sub === "object" ? sub.name : 
+      subCategories.find((s) => Number(s.id) === Number(sub))?.name || "Unknown Subcategory";
   };
 
   const handleDelete = () => {
@@ -412,7 +414,7 @@ export default function MenuManagement() {
                         )}
                       </td>
                       <td className="p-4 font-semibold">{item.currencySymbol || '₹'}{item.price}</td>
-                      <td className="p-4">{item.stockAvailable || 0}</td>
+                      <td className="p-4">{item.stockAvailable ?? "N/A"}</td>
                       <td className="p-4">
                         {item.averageRating ? (
                           <div className="flex items-center gap-1">
