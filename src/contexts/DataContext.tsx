@@ -242,28 +242,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ========================= ADD MENU ITEM (POST) ========================= */
   const addMenuItem = async (menuItem: Partial<MenuItem>): Promise<MenuItem> => {
-  try {
-    const payload = {
-      main_category: menuItem.categoryId,
-      sub_category: menuItem.subCategoryId,
-      name: menuItem.name,
-      description: menuItem.description || "",
-      price: menuItem.price ?? 100,
-      currency_symbol: menuItem.currencySymbol || "$",
-      tax_percentage: menuItem.taxPercentage ?? 0,
-      stock_available: menuItem.stockAvailable ?? 0,
-      is_available: menuItem.isAvailable ?? true,
-      is_active: menuItem.isActive ?? true,
-      prepare_time: menuItem.prepTime ?? 15,
-      variant_type: menuItem.variantType || "Veg",
-      quantity_value: menuItem.quantityValue ?? 1,
-      quantity_unit: menuItem.quantityUnit || "item",
-      max_order_quantity: menuItem.maxOrderQuantity ?? 5,
-      display_order: menuItem.displayOrder ?? 1,
-      is_featured: menuItem.isFeatured ?? false,
-      image: menuItem.image || "",
-      customizations: "",
-    };
+    try {
+      const payload = {
+        main_category: menuItem.categoryId,
+        sub_category: menuItem.subCategoryId,
+        name: menuItem.name,
+        description: menuItem.description || "",
+        price: menuItem.price ?? 100,
+        currency_symbol: menuItem.currencySymbol || "$",
+        tax_percentage: menuItem.taxPercentage ?? 0,
+        stock_available: menuItem.stockAvailable ?? 0,
+        is_available: menuItem.isAvailable ?? true,
+        is_active: menuItem.isActive ?? true,
+        prepare_time: menuItem.prepTime ?? 15,
+        variant_type: menuItem.variantType || "Veg",
+        quantity_value: menuItem.quantityValue ?? 1,
+        quantity_unit: menuItem.quantityUnit || "item",
+        max_order_quantity: menuItem.maxOrderQuantity ?? 5,
+        display_order: menuItem.displayOrder ?? 1,
+        is_featured: menuItem.isFeatured ?? false,
+        image: menuItem.image || "",
+        customizations: "",
+      };
 
       const { data } = await axios.post(`${API_BASE_URL}api/restaurant/product-items/`, payload, { headers });
       await getMenuItems(); 
