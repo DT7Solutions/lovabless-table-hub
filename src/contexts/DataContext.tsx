@@ -4,10 +4,7 @@ import axios from 'axios';
 import API_BASE_URL from '@/config';
 
 const token = localStorage.getItem("accessToken");
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${token}`,
-};
+const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}`, };
 
 interface DataContextType {
   categories: Category[];
@@ -16,11 +13,11 @@ interface DataContextType {
   tables: Table[];
   orders: Order[];
   ratings: ItemRating[];
-  addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => Promise<Category>;
-  updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt'>>) => Promise<Category>;
+  addCategory: (category: Partial<Category>) => Promise<Category>;
+  updateCategory: (id: string, category: Partial<Category>) => Promise<Category>;
   deleteCategory: (id: string) => void;
-  addSubCategory: (subCategory: Omit<SubCategory, 'id' | 'createdAt'>) => void;
-  updateSubCategory: (id: string, subCategory: Partial<Omit<SubCategory, 'id' | 'createdAt'>>) => void;
+  addSubCategory: (subCategory: Partial<SubCategory>) => Promise<SubCategory>;
+  updateSubCategory: (id: string, subCategory: Partial<SubCategory>) => Promise<SubCategory>;
   deleteSubCategory: (id: string) => void;
   addMenuItem: (menuItem: Omit<MenuItem, 'id' | 'createdAt'>) => void;
   updateMenuItem: (id: string, menuItem: Partial<Omit<MenuItem, 'id' | 'createdAt'>>) => void;
@@ -46,32 +43,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [ratings, setRatings] = useState<ItemRating[]>([]);
 
   useEffect(() => {
-    // const getCategories = async () => {
-    //   try {
-    //     const response = await axios.get(
-    //       `${API_BASE_URL}api/restaurant/main-categories/`,
-    //       { headers }
-    //     );
-    //     console.log("📦 Categories fetched:", response.data);
-
-    //     setCategories(response.data);
-    //     localStorage.setItem("categories", JSON.stringify(response.data));
-    //   } catch (error: any) {
-    //     console.error(
-    //       "❌ Error fetching categories:",error.response?.data || error.message
-    //     );
-    //     const storedCategories = localStorage.getItem("categories");
-    //     if (storedCategories) {
-    //       setCategories(JSON.parse(storedCategories));
-    //     } else {
-    //       setCategories([]);
-    //     }
-    //   }
-    // };
     getCategories();
     getSubCategories();
 
     initializeData();
+    refreshData();
   }, []);
 
   const initializeData = () => {
@@ -149,188 +125,106 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /* ========================= GET ALL CATEGORIES (GET) ========================= */
   const getCategories = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}api/restaurant/main-categories/`,
-        { headers }
-      );
-
-      setCategories(response.data);
-      localStorage.setItem('categories', JSON.stringify(response.data));
-    } catch (error: any) {
-      console.error("❌ Error fetching categories:", error.response?.data || error.message);
-
-      const storedCategories = localStorage.getItem('categories');
-      if (storedCategories) {
-        setCategories(JSON.parse(storedCategories));
-      } else {
-        setCategories([]);
-      }
+      const { data } = await axios.get(`${API_BASE_URL}api/restaurant/main-categories/`, { headers });
+      setCategories(data);
+      // console.log("✅ Categories loaded:", data);
+    } catch (err: any) {
+      console.error("❌ Error fetching categories:", err.message);
     }
   };
 
   /* ========================= ADD CATEGORY (POST) ========================= */
-  const addCategory = async (categoryData: Omit<Category, 'id' | 'createdAt'>) => {
+  const addCategory = async (category: Partial<Category>): Promise<Category> => {
     try {
-      if (!token) throw new Error("User not authenticated");
-
       const payload = {
-        name: categoryData.name,
-        description: categoryData.description || "",
-        is_active: categoryData.isActive ?? true,
-        display_order: categoryData.displayOrder ?? 1,
+        name: category.name,
+        description: category.description || "",
+        is_active: category.isActive ?? true,
+        display_order: category.displayOrder ?? 1,
       };
-
-      const response = await axios.post(
-        `${API_BASE_URL}api/restaurant/main-categories/`,
-        payload,
-        { headers }
-      );
-
-      const newCategory = response.data;
-      const updatedCategories = [...categories, newCategory];
-      setCategories(updatedCategories);
-      localStorage.setItem('categories', JSON.stringify(updatedCategories));
-
-      return newCategory;
-    } catch (error: any) {
-      console.error("❌ Error adding category:", error.response?.data || error.message);
-      throw error;
+      const { data } = await axios.post(`${API_BASE_URL}api/restaurant/main-categories/`, payload, { headers });
+      await getCategories();
+      return data;
+      // console.log("✅ Category added:", data);
+    } catch (err: any) {
+      console.error("❌ Error adding category:", err.message);
+      throw err;
     }
   };
 
   /* ========================= UPDATE CATEGORY (PUT) ========================= */
-  const updateCategory = async ( id: string, categoryData: Partial<Omit<Category, 'id' | 'createdAt'>>) => {
+  const updateCategory = async (id: string, category: Partial<Category>): Promise<Category> => {
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}api/restaurant/main-categories/update/${id}/`,
-        categoryData,
-        { headers }
-      );
-
-      const updatedCategory = response.data;
-      const updatedCategories = categories.map(cat =>
-        cat.id === id ? updatedCategory : cat
-      );
-      setCategories(updatedCategories);
-      localStorage.setItem('categories', JSON.stringify(updatedCategories));
-
-      return updatedCategory;
-    } catch (error: any) {
-      console.error("❌ Error updating category:", error.response?.data || error.message);
-      throw error;
+      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/main-categories/update/${id}/`, category, { headers });
+      await getCategories();
+      return data;
+      // console.log("✅ Category updated:", data);
+    } catch (err: any) {
+      console.error("❌ Error updating category:", err.message);
     }
   };
 
   /* ========================= DELETE CATEGORY (DELETE) ========================= */
   const deleteCategory = async (id: string) => {
     try {
-      const response = await axios.delete(
-        `${API_BASE_URL}api/restaurant/main-categories/delete/${id}/`,
-        { headers }
-      );
-
-      const updatedCategories = categories.filter(cat => cat.id !== id);
-      setCategories(updatedCategories);
-      localStorage.setItem('categories', JSON.stringify(updatedCategories));
-
-      return true;
-    } catch (error: any) {
-      console.error("❌ Error deleting category:", error.response?.data || error.message);
-      throw error;
+      await axios.delete(`${API_BASE_URL}api/restaurant/main-categories/delete/${id}/`, { headers });
+      await getCategories();
+      // console.log("✅ Category deleted:", id);
+    } catch (err: any) {
+      console.error("❌ Error deleting category:", err.message);
     }
   };
 
   /* ========================= GET ALL SUB-CATEGORIES (GET) ========================= */
   const getSubCategories = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}api/restaurant/sub-categories/`,
-        { headers }
-      );
-
-      setSubCategories(response.data);
-      localStorage.setItem('subCategories', JSON.stringify(response.data));
-    } catch (error: any) {
-      console.error("❌ Error fetching sub-categories:", error.response?.data || error.message);
-
-      const storedSubCategories = localStorage.getItem('subCategories');
-      if (storedSubCategories) {
-        setSubCategories(JSON.parse(storedSubCategories));
-      } else {
-        setSubCategories([]);
-      }
+      const { data } = await axios.get(`${API_BASE_URL}api/restaurant/sub-categories/`, { headers });
+      setSubCategories(data);
+      // console.log("✅ Subcategories loaded:", data);
+    } catch (err: any) {
+      console.error("❌ Error fetching subcategories:", err.message);
     }
   };
 
   /* ========================= ADD SUB-CATEGORY (POST) ========================= */
-  const addSubCategory = async (subCategoryData: Omit<SubCategory, 'id' | 'createdAt'>) => {
+  const addSubCategory = async (sub: Partial<SubCategory>): Promise<SubCategory> => {
     try {
-      if (!token) throw new Error("User not authenticated");
       const payload = {
-        name: subCategoryData.name,
-        description: subCategoryData.description || "",
-        is_active: subCategoryData.isActive ?? true,
-        display_order: subCategoryData.displayOrder ?? 1,
-        main_category: Number(subCategoryData.categoryId)
+        name: sub.name,
+        description: sub.description || "",
+        is_active: sub.isActive ?? true,
+        display_order: sub.displayOrder ?? 1,
+        main_category: Number(sub.categoryId),
       };
-      const response = await axios.post(
-        `${API_BASE_URL}api/restaurant/sub-categories/`,
-        payload,
-        { headers }
-      );
-      const newSubCategory = response.data;
-      const updatedSubCategories = [...subCategories, newSubCategory];
-      setSubCategories(updatedSubCategories);
-      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
-
-      return newSubCategory;
-    } catch (error: any) {
-      console.error("❌ Error adding sub-category:", error.response?.data || error.message);
-      throw error;
+      const { data } = await axios.post(`${API_BASE_URL}api/restaurant/sub-categories/`, payload, { headers });
+      await getSubCategories();
+      return data;
+      // console.log("✅ Subcategory added:", data);
+    } catch (err: any) {
+      console.error("❌ Error adding subcategory:", err.message);
     }
   };
 
   /* ========================= UPDATE SUB-CATEGORY (PUT) ========================= */
-  const updateSubCategory = async (
-    id: string,
-    subCategoryData: Partial<Omit<SubCategory, 'id' | 'createdAt'>>
-  ) => {
+  const updateSubCategory = async (id: string, sub: Partial<SubCategory>) => {
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}api/restaurant/sub-categories/update/${id}/`,
-        subCategoryData,
-        { headers }
-      );
-
-      const updatedSubCategory = response.data;
-      const updatedSubCategories = subCategories.map(sub =>
-        sub.id === id ? updatedSubCategory : sub
-      );
-      setSubCategories(updatedSubCategories);
-      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
-
-      return updatedSubCategory;
-    } catch (error: any) {
-      console.error("❌ Error updating sub-category:", error.response?.data || error.message);
-      throw error;
+      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/sub-categories/update/${id}/`, sub, { headers });
+      await getSubCategories();
+      return data;
+      // console.log("✅ Subcategory updated:", data);
+    } catch (err: any) {
+      console.error("❌ Error updating subcategory:", err.message);
     }
   };
 
   /* ========================= DELETE SUB-CATEGORY (DELETE) ========================= */
   const deleteSubCategory = async (id: string) => {
     try {
-      const response = await axios.delete(
-        `${API_BASE_URL}api/restaurant/sub-categories/delete/${id}/`,
-        { headers }
-      );
-
-      const updatedSubCategories = subCategories.filter(sub => sub.id !== id);
-      setSubCategories(updatedSubCategories);
-      localStorage.setItem('subCategories', JSON.stringify(updatedSubCategories));
-      return true;
-    } catch (error: any) {
-      console.error("❌ Error deleting sub-category:", error.response?.data || error.message);
-      throw error;
+      await axios.delete(`${API_BASE_URL}api/restaurant/sub-categories/delete/${id}/`, { headers });
+      await getSubCategories();
+      // console.log("✅ Subcategory deleted:", id);
+    } catch (err: any) {
+      console.error("❌ Error deleting subcategory:", err.message);
     }
   };
 
@@ -491,14 +385,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getMenuItemById = (id: string) => menuItems.find(item => item.id === id);
   const getTableById = (id: string) => tables.find(table => table.id === id);
 
+  /* ========================= REFRESH DATA (Reload all data from server) ========================= */
   const refreshData = async () => {
     try {
-      await Promise.all([
-        getCategories(),
-        getSubCategories(),
-        // getMenuItems(),
-      ]);
-      console.log("✅ Data refreshed successfully");
+      await Promise.all([getCategories(), getSubCategories()]);
+      // console.log("🔄 Data refreshed successfully");
     } catch (error: any) {
       console.error("❌ Error refreshing data:", error.message);
     }

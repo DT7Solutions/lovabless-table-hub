@@ -29,9 +29,17 @@ export default function MenuManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'category' | 'subcategory' | 'item', id: string } | null>(null);
 
   const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const name = (item.name || '').toString();
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
+    const itemCategoryId = item.categoryId ?? (item.categoryId !== undefined ? String(item.categoryId) : undefined);
+    const itemSubCategoryId = item.subCategoryId ?? (item.id !== undefined ? String(item.id) : undefined);
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (itemCategoryId !== undefined && String(itemCategoryId) === String(selectedCategory));
+    const matchesSubCategory =
+      selectedsubCategory === 'all' ||
+      (itemSubCategoryId !== undefined && String(itemSubCategoryId) === String(selectedsubCategory));
+    return matchesSearch && matchesCategory && matchesSubCategory;
   });
 
   useEffect(() => {
@@ -204,34 +212,31 @@ export default function MenuManagement() {
             </div>
 
             {/* Category Select */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select value={selectedCategory} onValueChange={(val) => { setSelectedCategory(val); }}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories
-                  .filter((cat: any) => cat.is_active).map((cat: any) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>
-                      {cat.name}
-                    </SelectItem>
+                  {categories.filter((cat: any) => cat.is_active).map((cat: any) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                   ))}
               </SelectContent>
             </Select>
 
             {/* Subcategory Select — Filtered by Category */}
-            <Select value={selectedsubCategory} onValueChange={setSelectedsubCategory} disabled={selectedCategory === "all"}>
+            <Select value={selectedsubCategory}  onValueChange={(val) => setSelectedsubCategory(val)} disabled={selectedCategory === "all"}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="All Sub Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sub Categories</SelectItem>
-                {subCategories
-                  .filter((sub: any) =>sub.is_active &&Number(sub.main_category) === Number(selectedCategory)).map((sub: any) => (
-                    <SelectItem key={sub.id} value={String(sub.id)}>
-                      {sub.name}
-                    </SelectItem>
-                  ))}
+                  {subCategories.filter((sub: any) => {
+                    if (!sub || !sub.is_active) return false;
+                    const subMain = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+                    if (!subMain) return false;
+                    return selectedCategory === "all" ? true : Number(subMain) === Number(selectedCategory);
+                  }).map((sub: any) => ( <SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem> ))}
               </SelectContent>
             </Select>
 
@@ -251,44 +256,31 @@ export default function MenuManagement() {
       {/* Category Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         <Button
-          variant={selectedCategory === 'all' ? 'default' : 'outline'}
-          onClick={() => setSelectedCategory('all')}
+          variant={selectedCategory === "all" ? "default" : "outline"}
+          onClick={() => {setSelectedCategory("all"); setSelectedsubCategory("all"); setSearchQuery("")}}
           className="shrink-0"
         >
           All Items ({menuItems.length})
         </Button>
-        {categories.map(category => {
-          const count = menuItems.filter(item => item.categoryId === category.id).length;
+
+        {categories.map((category: any) => {
+          const subCount = subCategories.filter((sub: any) => { const subMain = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+            return subMain !== undefined && Number(subMain) === Number(category.id);
+          }).length;
+          const itemCount = menuItems.filter((item: any) => { const itemMain = item.categoryId ?? (item.main_category !== undefined ? String(item.main_category) : undefined);
+            return itemMain !== undefined && Number(itemMain) === Number(category.id);
+          }).length;
+
           return (
             <div key={category.id} className="relative group shrink-0">
-              <Button
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(category.id)}
-                className="pr-20"
-              >
-                {category.name} ({count})
+              <Button  variant={Number(selectedCategory) === Number(category.id) ? "default" : "outline"} onClick={() => {setSelectedCategory(String(category.id)); setSelectedsubCategory("all")} } className="pr-10" >
+                {category.name} ({itemCount} items / {subCount} sub)
               </Button>
               <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditCategory(category);
-                  }}
-                >
+                <Button variant="ghost" size="icon" className="h-7 w-7 bg-accent" onClick={(e) => { e.stopPropagation(); setEditingCategory(category); setIsAddCategoryDialogOpen(true); }}>
                   <Edit className="h-3 w-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteConfirm({ type: 'category', id: category.id });
-                  }}
-                >
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive bg-accent" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "category", id: category.id }); }}>
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -767,9 +759,10 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   const [maxOrderQuantity, setMaxOrderQuantity] = useState(menuItem?.maxOrderQuantity?.toString() || '');
   const [displayOrder, setDisplayOrder] = useState(menuItem?.displayOrder?.toString() || '0');
 
-  const filteredSubCategories = subCategories.filter(sc => 
-    sc.categoryId === categoryId && sc.isActive
-  );
+  const filteredSubCategories = subCategories.filter((sub: any) => {
+    const mainCat = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+    return mainCat === categoryId && sub.is_active;
+  });
 
   const handleCategoryChange = (newCategoryId: string) => {
     setCategoryId(newCategoryId);
@@ -840,6 +833,16 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
     }
     onClose();
   };
+
+  useEffect(() => {
+    if (categoryId) {
+      const filteredSubs = subCategories.filter((sub: any) => {
+        const mainCat = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+        return mainCat === categoryId && sub.is_active;
+      });
+      setSubCategoryId('');
+    }
+  }, [categoryId, subCategories]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -927,8 +930,8 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.filter((category: any ) => category.is_active).map((category: any) => (
-                <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem>
+              {categories.filter((cat: any) => cat.is_active).map((cat: any) => (
+                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -944,8 +947,8 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select subcategory" />
             </SelectTrigger>
             <SelectContent>
-              {filteredSubCategories.map(subCat => (
-                <SelectItem key={subCat.id} value={subCat.id}>{subCat.name}</SelectItem>
+              {filteredSubCategories.map((subCat: any) => (
+                <SelectItem key={subCat.id} value={String(subCat.id)}>{subCat.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
