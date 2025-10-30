@@ -229,18 +229,46 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  /* ========================= GET ALL MENU ITEMS (GET) ========================= */
+/* ========================= MENU ITEM API HANDLERS ========================= */
+
+  const mapMenuItem = (item: any): MenuItem => ({
+    id: String(item.id || ''),
+    categoryId: String(item.main_category || ''),
+    subCategoryId: String(item.sub_category || ''),
+    name: item.name || '',
+    description: item.description || '',
+    price: Number(item.price) || 0,
+    image: item.image || '',
+    isAvailable: !!item.is_available,
+    isActive: !!item.is_active,
+    prepTime: item.prepare_time ?? 0,
+    isFeatured: !!item.is_featured,
+    variantType: item.variant_type || '',
+    quantityValue: item.quantity_value ?? 0,
+    quantityUnit: item.quantity_unit || '',
+    currencySymbol: item.currency_symbol || '₹',
+    taxPercentage: Number(item.tax_percentage) || 0,
+    stockAvailable: item.stock_available ?? 0,
+    maxOrderQuantity: item.max_order_quantity ?? 0,
+    displayOrder: item.display_order ?? 0,
+    createdAt: item.created_at || '',
+    averageRating: parseFloat(item.rating_avg) || 0,
+    totalRatings: item.total_ratings ?? 0,
+  });
+
+  /* ========================= GET ALL MENU ITEMS ========================= */
   const getMenuItems = async () => {
     try {
       const { data } = await axios.get(`${API_BASE_URL}api/restaurant/product-items/`, { headers });
-      setMenuItems(data);
-      console.log("✅ Menu Items loaded:", data);
+      const formatted = data.map(mapMenuItem);
+      setMenuItems(formatted);
+      // console.log("✅ Menu Items loaded:", formatted);
     } catch (err: any) {
       console.error("❌ Error fetching menu items:", err.message);
     }
   };
 
-  /* ========================= ADD MENU ITEM (POST) ========================= */
+  /* ========================= ADD MENU ITEM ========================= */
   const addMenuItem = async (menuItem: Partial<MenuItem>): Promise<MenuItem> => {
     try {
       const payload = {
@@ -249,7 +277,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: menuItem.name,
         description: menuItem.description || "",
         price: menuItem.price ?? 100,
-        currency_symbol: menuItem.currencySymbol || "$",
+        currency_symbol: menuItem.currencySymbol || "₹",
         tax_percentage: menuItem.taxPercentage ?? 0,
         stock_available: menuItem.stockAvailable ?? 0,
         is_available: menuItem.isAvailable ?? true,
@@ -266,16 +294,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       const { data } = await axios.post(`${API_BASE_URL}api/restaurant/product-items/`, payload, { headers });
-      await getMenuItems(); 
-      console.log("✅ Menu Item added:", data);
-      return data;
+      await getMenuItems();
+      // console.log("✅ Menu Item added:", data);
+      return mapMenuItem(data);
     } catch (err: any) {
       console.error("❌ Error adding menu item:", err.message);
       throw err;
     }
   };
 
-  /* ========================= UPDATE MENU ITEM (PUT) ========================= */
+  /* ========================= UPDATE MENU ITEM ========================= */
   const updateMenuItem = async (id: string, menuItem: Partial<MenuItem>): Promise<MenuItem> => {
     try {
       const payload = {
@@ -302,14 +330,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data } = await axios.put(`${API_BASE_URL}api/restaurant/product-items/update/${id}/`, payload, { headers });
       await getMenuItems();
       // console.log("✅ Menu Item updated:", data);
-      return data;
+      return mapMenuItem(data);
     } catch (err: any) {
       console.error("❌ Error updating menu item:", err.message);
       throw err;
     }
   };
 
-  /* ========================= DELETE MENU ITEM (DELETE) ========================= */
+  /* ========================= DELETE MENU ITEM ========================= */
   const deleteMenuItem = async (id: string) => {
     try {
       await axios.delete(`${API_BASE_URL}api/restaurant/product-items/delete/${id}/`, { headers });

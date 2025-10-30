@@ -315,10 +315,10 @@ export default function MenuManagement() {
                   </Badge>
                 </div>
               </div>
-              <CardContent className="p-4">
+              <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{item.name}</h3>
+                    <h3 className="font-semibold text-xl">{item.name}</h3>
                     <div className="flex gap-1 mt-1">
                       <Badge variant="outline" className="text-xs">
                         {getCategoryName(item.categoryId)}
@@ -331,20 +331,10 @@ export default function MenuManagement() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleEditMenuItem(item)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-4 w-4"onClick={() => handleEditMenuItem(item)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-destructive"
-                      onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}
-                    >
+                    <Button variant="ghost" size="icon" className="h-4 w-4 text-destructive"onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -353,16 +343,17 @@ export default function MenuManagement() {
                   {item.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">
-                    {item.currencySymbol || '₹'}{item.price}
-                  </span>
-                  {item.averageRating && (
-                    <div className="flex items-center gap-1 text-sm">
-                      <Star className="h-4 w-4 fill-warning text-warning" />
-                      <span className="font-medium">{item.averageRating.toFixed(1)}</span>
-                      <span className="text-muted-foreground">({item.totalRatings})</span>
+                  <span className="text-xl font-bold text-primary">{item.currencySymbol || '$'}{item.price}</span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <div className="relative w-4 h-4 flex items-center justify-center">
+                      <Star className="absolute inset-0 text-muted-foreground w-4 h-4" />
+                      <div className="absolute inset-0 overflow-hidden" style={{ width: `${(item.averageRating / 5) * 100}%` }} >
+                        <Star className="text-warning fill-warning w-4 h-4" />
+                      </div>
                     </div>
-                  )}
+                    <span className="font-medium text-base">{item.averageRating ? item.averageRating.toFixed(1) : "0.0"}</span>
+                    <span className="text-muted-foreground text-xs">({item.totalRatings || 0})</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -755,7 +746,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   const [variantType, setVariantType] = useState(menuItem?.variantType || '');
   const [quantityValue, setQuantityValue] = useState(menuItem?.quantityValue?.toString() || '1');
   const [quantityUnit, setQuantityUnit] = useState(menuItem?.quantityUnit || 'item');
-  const [currencySymbol, setCurrencySymbol] = useState(menuItem?.currencySymbol || '₹');
+  const [currencySymbol, setCurrencySymbol] = useState(menuItem?.currencySymbol || '$');
   const [taxPercentage, setTaxPercentage] = useState(menuItem?.taxPercentage?.toString() || '0.00');
   const [stockAvailable, setStockAvailable] = useState(menuItem?.stockAvailable?.toString() || '0');
   const [maxOrderQuantity, setMaxOrderQuantity] = useState(menuItem?.maxOrderQuantity?.toString() || '');
@@ -813,7 +804,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
       variantType: variantType.trim() || undefined,
       quantityValue: quantityValue ? parseFloat(quantityValue) : 1,
       quantityUnit: quantityUnit || 'item',
-      currencySymbol: currencySymbol || '₹',
+      currencySymbol: currencySymbol || '$',
       taxPercentage: taxPercentage ? parseFloat(taxPercentage) : 0,
       stockAvailable: stockAvailable ? parseInt(stockAvailable) : 0,
       maxOrderQuantity: maxOrderQuantity ? parseInt(maxOrderQuantity) : undefined,
@@ -965,9 +956,9 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="₹">₹ (INR)</SelectItem>
               <SelectItem value="$">$ (USD)</SelectItem>
               <SelectItem value="€">€ (EUR)</SelectItem>
+              <SelectItem value="₹">₹ (INR)</SelectItem>
               <SelectItem value="£">£ (GBP)</SelectItem>
             </SelectContent>
           </Select>
