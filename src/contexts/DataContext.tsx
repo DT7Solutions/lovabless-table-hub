@@ -30,6 +30,10 @@ interface DataContextType {
   getMenuItemById: (id: string) => MenuItem | undefined;
   getTableById: (id: string) => Table | undefined;
   refreshData: () => void;
+
+  variantChoices: { value: string; label: string }[];
+  unitChoices: { value: string; label: string }[];
+  currencyChoices: { value: string; label: string }[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -42,10 +46,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [orders, setOrders] = useState<Order[]>([]);
   const [ratings, setRatings] = useState<ItemRating[]>([]);
 
+  const [variantChoices, setVariantChoices] = useState<{ value: string; label: string }[]>([]);
+  const [unitChoices, setUnitChoices] = useState<{ value: string; label: string }[]>([]);
+  const [currencyChoices, setCurrencyChoices] = useState<{ value: string; label: string }[]>([]);
+
   useEffect(() => {
     getCategories();
     getSubCategories();
     getMenuItems();
+    fetchProductChoices();
 
     initializeData();
     refreshData();
@@ -123,6 +132,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
+  /* ========================= GET ALL PRODUCT CHOICES OPTIONS (GET) ========================= */
+  const fetchProductChoices = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}api/restaurant/product-choices/`, { headers });
+      const data = res.data;
+      setVariantChoices(data.variant_choices || []);
+      setUnitChoices(data.unit_choices || []);
+      setCurrencyChoices(data.currency_choices || []);
+      // console.log("✅ Product choices loaded:", data);
+    } catch (error) {
+      console.error("Failed to fetch product choices:", error);
+    }
+  };
+
   /* ========================= GET ALL CATEGORIES (GET) ========================= */
   const getCategories = async () => {
     try {
@@ -230,7 +253,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
 /* ========================= MENU ITEM API HANDLERS ========================= */
-
   const mapMenuItem = (item: any): MenuItem => ({
     id: String(item.id || ''),
     categoryId: String(item.main_category || ''),
@@ -272,7 +294,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addMenuItem = async (menuItem: Partial<MenuItem>): Promise<MenuItem> => {
     try {
       const payload = {
-        main_category: menuItem.categoryId,
+        main_category: Number(menuItem.categoryId),
         sub_category: menuItem.subCategoryId,
         name: menuItem.name,
         description: menuItem.description || "",
@@ -433,6 +455,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <DataContext.Provider value={{
+      variantChoices,
+      unitChoices,
+      currencyChoices,
       categories,
       subCategories,
       menuItems,

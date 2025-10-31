@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -731,7 +731,7 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
 }
 
 function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClose: () => void }) {
-  const { categories, subCategories, addMenuItem, updateMenuItem } = useData();
+  const { categories, subCategories, addMenuItem, updateMenuItem, variantChoices, unitChoices, currencyChoices } = useData();
   const [name, setName] = useState(menuItem?.name || '');
   const [categoryId, setCategoryId] = useState(menuItem?.categoryId || '');
   const [subCategoryId, setSubCategoryId] = useState(menuItem?.subCategoryId || '');
@@ -752,10 +752,12 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   const [maxOrderQuantity, setMaxOrderQuantity] = useState(menuItem?.maxOrderQuantity?.toString() || '');
   const [displayOrder, setDisplayOrder] = useState(menuItem?.displayOrder?.toString() || '0');
 
-  const filteredSubCategories = subCategories.filter((sub: any) => {
-    const mainCat = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
-    return mainCat === categoryId && sub.is_active;
-  });
+  const filteredSubCategories = useMemo(() => {
+    return subCategories.filter((sub: any) => {
+      const mainCat = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+      return mainCat === categoryId && sub.is_active;
+    });
+  }, [categoryId, subCategories]);
 
   const handleCategoryChange = (newCategoryId: string) => {
     setCategoryId(newCategoryId);
@@ -828,14 +830,11 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   };
 
   useEffect(() => {
-    if (categoryId) {
-      const filteredSubs = subCategories.filter((sub: any) => {
-        const mainCat = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
-        return mainCat === categoryId && sub.is_active;
-      });
-      setSubCategoryId('');
+    if (menuItem && String(menuItem.categoryId) === String(categoryId)) {
+      return;
     }
-  }, [categoryId, subCategories]);
+    setSubCategoryId('');
+  }, [categoryId, menuItem]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -894,10 +893,11 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select variant" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Veg">Veg</SelectItem>
-              <SelectItem value="Non-Veg">Non-Veg</SelectItem>
-              <SelectItem value="Vegan">Vegan</SelectItem>
-              <SelectItem value="Egg">Egg</SelectItem>
+              {variantChoices.map((variant) => (
+                <SelectItem key={variant.value} value={variant.value}>
+                  {variant.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -953,13 +953,14 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
           <Label htmlFor="currency">Currency *</Label>
           <Select value={currencySymbol} onValueChange={setCurrencySymbol}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select currency" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="$">$ (USD)</SelectItem>
-              <SelectItem value="€">€ (EUR)</SelectItem>
-              <SelectItem value="₹">₹ (INR)</SelectItem>
-              <SelectItem value="£">£ (GBP)</SelectItem>
+              {currencyChoices.map((currency) => (
+                <SelectItem key={currency.value} value={currency.value}>
+                  {currency.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -1004,14 +1005,14 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
           <Label htmlFor="quantity-unit">Quantity Unit *</Label>
           <Select value={quantityUnit} onValueChange={setQuantityUnit}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select unit" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="item">item</SelectItem>
-              <SelectItem value="plate">plate</SelectItem>
-              <SelectItem value="kg">kg</SelectItem>
-              <SelectItem value="litre">litre</SelectItem>
-              <SelectItem value="piece">piece</SelectItem>
+              {unitChoices.map((unit) => (
+                <SelectItem key={unit.value} value={unit.value}>
+                  {unit.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
