@@ -19,7 +19,7 @@ export default function MenuManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedsubCategory, setSelectedsubCategory] = useState('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
   const [isAddSubCategoryDialogOpen, setIsAddSubCategoryDialogOpen] = useState(false);
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
@@ -380,7 +380,7 @@ export default function MenuManagement() {
                   {filteredItems.map(item => (
                     <tr key={item.id} className="border-b hover:bg-muted/50">
                       <td className="p-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 w-80">
                           <div className="h-12 w-12 rounded bg-muted flex-shrink-0">
                             {item.image ? (
                               <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
@@ -392,7 +392,7 @@ export default function MenuManagement() {
                           </div>
                           <div>
                             <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                           </div>
                         </div>
                       </td>
@@ -741,8 +741,10 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   const [isAvailable, setIsAvailable] = useState(menuItem?.isAvailable ?? true);
   const [isActive, setIsActive] = useState(menuItem?.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(menuItem?.isFeatured ?? false);
-  const [image, setImage] = useState(menuItem?.image || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(menuItem?.image || '');
+  const [image, setImage] = useState(menuItem?.image || '');
+  const [isImageDeleted, setIsImageDeleted] = useState(false);
   const [variantType, setVariantType] = useState(menuItem?.variantType || '');
   const [quantityValue, setQuantityValue] = useState(menuItem?.quantityValue?.toString() || '1');
   const [quantityUnit, setQuantityUnit] = useState(menuItem?.quantityUnit || 'item');
@@ -764,69 +766,67 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
     setSubCategoryId('');
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setImage(value);
-    setImagePreview(value);
+  const urlToFile = async (url: string, filename: string): Promise<File> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const file = new File([blob], filename, { type: blob.type });
+    return file;
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim() || !categoryId || !description.trim() || !price) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
     const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum <= 0) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid price",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Please enter a valid price", variant: "destructive" });
       return;
     }
 
-    const itemData = {
-      name: name.trim(),
-      categoryId,
-      subCategoryId: subCategoryId || undefined,
-      description: description.trim(),
-      price: priceNum,
-      prepTime: prepTime ? parseInt(prepTime) : undefined,
-      isAvailable,
-      isActive,
-      isFeatured,
-      image: image.trim() || undefined,
-      variantType: variantType.trim() || undefined,
-      quantityValue: quantityValue ? parseFloat(quantityValue) : 1,
-      quantityUnit: quantityUnit || 'item',
-      currencySymbol: currencySymbol || '$',
-      taxPercentage: taxPercentage ? parseFloat(taxPercentage) : 0,
-      stockAvailable: stockAvailable ? parseInt(stockAvailable) : 0,
-      maxOrderQuantity: maxOrderQuantity ? parseInt(maxOrderQuantity) : undefined,
-      displayOrder: displayOrder ? parseInt(displayOrder) : 0,
-    };
+    try {
+      const itemData: any = {
+        name: name.trim(),
+        categoryId,
+        subCategoryId: subCategoryId || null,
+        description: description.trim(),
+        price: priceNum,
+        prepTime: prepTime ? parseInt(prepTime) : 0,
+        isAvailable,
+        isActive,
+        isFeatured,
+        variantType,
+        quantityValue: quantityValue ? parseFloat(quantityValue) : 1,
+        quantityUnit,
+        currencySymbol,
+        taxPercentage: taxPercentage ? parseFloat(taxPercentage) : 0,
+        stockAvailable: stockAvailable ? parseInt(stockAvailable) : 0,
+        maxOrderQuantity: maxOrderQuantity ? parseInt(maxOrderQuantity) : null,
+        displayOrder: displayOrder ? parseInt(displayOrder) : 0,
+      };
 
-    if (menuItem) {
-      updateMenuItem(menuItem.id, itemData);
-      toast({
-        title: "Success",
-        description: "Menu item updated successfully",
-      });
-    } else {
-      addMenuItem(itemData);
-      toast({
-        title: "Success",
-        description: "Menu item added successfully",
-      });
+      if (imageFile) {
+        itemData.image = imageFile;
+      } else if (menuItem?.image) {
+        itemData.image = menuItem.image;
+      }
+
+      if (menuItem) {
+        await updateMenuItem(menuItem.id, itemData);
+        toast({ title: "Success", description: "Menu item updated successfully" });
+      } else {
+        await addMenuItem(itemData);
+        toast({ title: "Success", description: "Menu item added successfully" });
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("❌ Image upload or submit failed:", error);
+      toast({ title: "Error", description: "Something went wrong while saving the item", variant: "destructive" });
     }
-    onClose();
   };
 
   useEffect(() => {
@@ -840,39 +840,46 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Product Image Section */}
       <div className="space-y-2">
-        <Label htmlFor="image">Product Image</Label>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <Input 
-              id="image" 
-              placeholder="https://example.com/image.jpg or paste image URL"
-              value={image}
-              onChange={handleImageChange}
-            />
+        <Label htmlFor="image" className="text-sm font-semibold text-gray-700"> Product Image </Label>
+        <div className="relative">
+          <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 hover:bg-gray-100 hover:border-blue-400 transition-all duration-300 ease-in-out flex flex-col items-center justify-center p-6 cursor-pointer"
+            onClick={() => document.getElementById("imageInput")?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file) { const url = URL.createObjectURL(file); setImageFile(file); setImagePreview(url); setImage(url); }
+            }}
+          >
+            {imagePreview ? (
+              <div className="relative group">
+                <img src={imagePreview} alt="Preview" className="mx-auto h-44 w-auto rounded-xl object-cover shadow-md group-hover:opacity-90 transition" />
+                <button type="button" className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); setImage(""); setImagePreview(""); setImageFile(null); setIsImageDeleted(true); }} > ✕ Remove </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-gray-500">
+                <div className="bg-gray-200 rounded-full p-3 mb-2"> 📁 </div>
+                <p className="text-sm font-medium">Drop image here or click to upload</p>
+                <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG up to 5MB</p>
+              </div>
+            )}
           </div>
+          <input id="imageInput" type="file" accept="image/*" className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) { const url = URL.createObjectURL(file); setImageFile(file); setImagePreview(url); setImage(url); }
+            }}
+          />
         </div>
-        {imagePreview && (
-          <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
-            <img 
-              src={imagePreview} 
-              alt="Preview" 
-              className="w-full h-full object-cover"
-              onError={() => setImagePreview('')}
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2"
-              onClick={() => {
-                setImage('');
-                setImagePreview('');
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <div className="relative">
+          <Input placeholder="Or paste image URL..." value={image}
+            onChange={(e) => { setImage(e.target.value); setImagePreview(e.target.value); }}
+            className="pr-10 rounded-xl"
+          />
+          {image && (
+            <button type="button" className="absolute right-3 top-2.5 text-gray-400 hover:text-red-500 transition" onClick={() => { setImage(""); setImagePreview(""); setImageFile(null); setIsImageDeleted(true); }} > ✕ </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

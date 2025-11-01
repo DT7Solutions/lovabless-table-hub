@@ -13,6 +13,9 @@ interface DataContextType {
   tables: Table[];
   orders: Order[];
   ratings: ItemRating[];
+  variantChoices: { value: string; label: string }[];
+  unitChoices: { value: string; label: string }[];
+  currencyChoices: { value: string; label: string }[];
   addCategory: (category: Partial<Category>) => Promise<Category>;
   updateCategory: (id: string, category: Partial<Category>) => Promise<Category>;
   deleteCategory: (id: string) => void;
@@ -30,10 +33,6 @@ interface DataContextType {
   getMenuItemById: (id: string) => MenuItem | undefined;
   getTableById: (id: string) => Table | undefined;
   refreshData: () => void;
-
-  variantChoices: { value: string; label: string }[];
-  unitChoices: { value: string; label: string }[];
-  currencyChoices: { value: string; label: string }[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -129,20 +128,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (storedRatings) {
       setRatings(JSON.parse(storedRatings));
-    }
-  };
-  
-  /* ========================= GET ALL PRODUCT CHOICES OPTIONS (GET) ========================= */
-  const fetchProductChoices = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}api/restaurant/product-choices/`, { headers });
-      const data = res.data;
-      setVariantChoices(data.variant_choices || []);
-      setUnitChoices(data.unit_choices || []);
-      setCurrencyChoices(data.currency_choices || []);
-      // console.log("✅ Product choices loaded:", data);
-    } catch (error) {
-      console.error("Failed to fetch product choices:", error);
     }
   };
 
@@ -252,15 +237,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-/* ========================= MENU ITEM API HANDLERS ========================= */
+  /* ========================= GET ALL PRODUCT CHOICES OPTIONS (GET) ========================= */
+  const fetchProductChoices = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}api/restaurant/product-choices/`, { headers });
+      const data = res.data;
+      setVariantChoices(data.variant_choices || []);
+      setUnitChoices(data.unit_choices || []);
+      setCurrencyChoices(data.currency_choices || []);
+      // console.log("✅ Product choices loaded:", data);
+    } catch (error) {
+      console.error("Failed to fetch product choices:", error);
+    }
+  };
+
+  /* ========================= MENU ITEM API HANDLERS ========================= */
   const mapMenuItem = (item: any): MenuItem => ({
-    id: String(item.id || ''),
-    categoryId: String(item.main_category || ''),
-    subCategoryId: String(item.sub_category || ''),
-    name: item.name || '',
-    description: item.description || '',
-    price: Number(item.price) || 0,
-    image: item.image || '',
+    id: String(item.id ?? ''),
+    categoryId: String(item.main_category ?? ''),
+    subCategoryId: String(item.sub_category ?? ''),
+    name: item.name ?? '',
+    description: item.description ?? '',
+    price: parseFloat(item.price) ?? 0,
+    image: item.image_url || item.image || '',
     isAvailable: !!item.is_available,
     isActive: !!item.is_active,
     prepTime: item.prepare_time ?? 0,
@@ -268,8 +267,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     variantType: item.variant_type || '',
     quantityValue: item.quantity_value ?? 0,
     quantityUnit: item.quantity_unit || '',
-    currencySymbol: item.currency_symbol || '₹',
-    taxPercentage: Number(item.tax_percentage) || 0,
+    currencySymbol: item.currency_symbol || '$',
+    taxPercentage: parseFloat(item.tax_percentage) ?? 0,
     stockAvailable: item.stock_available ?? 0,
     maxOrderQuantity: item.max_order_quantity ?? 0,
     displayOrder: item.display_order ?? 0,
@@ -295,23 +294,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const payload = {
         main_category: Number(menuItem.categoryId),
-        sub_category: menuItem.subCategoryId,
+        sub_category: menuItem.subCategoryId || null,
         name: menuItem.name,
         description: menuItem.description || "",
-        price: menuItem.price ?? 100,
-        currency_symbol: menuItem.currencySymbol || "₹",
+        price: menuItem.price ?? 0,
+        currency_symbol: menuItem.currencySymbol || "$",
         tax_percentage: menuItem.taxPercentage ?? 0,
         stock_available: menuItem.stockAvailable ?? 0,
         is_available: menuItem.isAvailable ?? true,
         is_active: menuItem.isActive ?? true,
-        prepare_time: menuItem.prepTime ?? 15,
-        variant_type: menuItem.variantType || "Veg",
+        prepare_time: menuItem.prepTime ?? 0,
+        variant_type: menuItem.variantType || "None",
         quantity_value: menuItem.quantityValue ?? 1,
-        quantity_unit: menuItem.quantityUnit || "item",
-        max_order_quantity: menuItem.maxOrderQuantity ?? 5,
-        display_order: menuItem.displayOrder ?? 1,
+        quantity_unit: menuItem.quantityUnit || "None",
+        max_order_quantity: menuItem.maxOrderQuantity ?? null,
+        display_order: menuItem.displayOrder ?? 0,
         is_featured: menuItem.isFeatured ?? false,
-        image: menuItem.image || "",
+        image: menuItem.image ?? "",
+        image_url: menuItem.image ?? "",
         customizations: "",
       };
 
@@ -327,32 +327,62 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /* ========================= UPDATE MENU ITEM ========================= */
   const updateMenuItem = async (id: string, menuItem: Partial<MenuItem>): Promise<MenuItem> => {
+    debugger;
     try {
-      const payload = {
-        main_category: menuItem.categoryId,
-        sub_category: menuItem.subCategoryId,
-        name: menuItem.name,
-        description: menuItem.description,
-        price: menuItem.price,
-        currency_symbol: menuItem.currencySymbol,
-        tax_percentage: menuItem.taxPercentage,
-        stock_available: menuItem.stockAvailable,
-        is_available: menuItem.isAvailable,
-        is_active: menuItem.isActive,
-        prepare_time: menuItem.prepTime,
-        variant_type: menuItem.variantType,
-        quantity_value: menuItem.quantityValue,
-        quantity_unit: menuItem.quantityUnit,
-        max_order_quantity: menuItem.maxOrderQuantity,
-        display_order: menuItem.displayOrder,
-        is_featured: menuItem.isFeatured,
-        image: menuItem.image,
-      };
+      // Check if image is a file (for drag-drop upload)
+      const isFileUpload = menuItem.image && typeof menuItem.image !== "string";
 
-      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/product-items/update/${id}/`, payload, { headers });
+      let response;
+
+      if (isFileUpload) {
+        // Create FormData only if image is a file
+        const formData = new FormData();
+        Object.entries(menuItem).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value as any);
+          }
+        });
+
+        response = await axios.put(
+          `${API_BASE_URL}api/restaurant/product-items/update/${id}/`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        // Default JSON update
+        response = await axios.put(
+          `${API_BASE_URL}api/restaurant/product-items/update/${id}/`,
+          {
+            main_category: menuItem.categoryId,
+            sub_category: menuItem.subCategoryId,
+            name: menuItem.name,
+            description: menuItem.description,
+            price: menuItem.price,
+            currency_symbol: menuItem.currencySymbol,
+            tax_percentage: menuItem.taxPercentage,
+            stock_available: menuItem.stockAvailable,
+            is_available: menuItem.isAvailable,
+            is_active: menuItem.isActive,
+            prepare_time: menuItem.prepTime,
+            variant_type: menuItem.variantType,
+            quantity_value: menuItem.quantityValue,
+            quantity_unit: menuItem.quantityUnit,
+            max_order_quantity: menuItem.maxOrderQuantity,
+            display_order: menuItem.displayOrder,
+            image: menuItem.image ?? "",
+          },
+          { headers }
+        );
+      }
+
       await getMenuItems();
-      // console.log("✅ Menu Item updated:", data);
-      return mapMenuItem(data);
+      return mapMenuItem(response.data);
+
     } catch (err: any) {
       console.error("❌ Error updating menu item:", err.message);
       throw err;
