@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Category, SubCategory, MenuItem, Table, Order, OrderItem, ItemRating } from '@/types';
+import { useAuth } from "@/contexts/AuthContext";
 import axios from 'axios';
 import API_BASE_URL from '@/config';
-
-const token = localStorage.getItem("accessToken");
-const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}`, };
 
 interface DataContextType {
   categories: Category[];
@@ -38,6 +36,10 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  const token = localStorage.getItem("accessToken");
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -50,14 +52,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currencyChoices, setCurrencyChoices] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
-    getCategories();
-    getSubCategories();
-    getMenuItems();
-    fetchProductChoices();
-
-    initializeData();
-    refreshData();
-  }, []);
+    if (isAuthenticated && token) {
+      refreshData();
+      fetchProductChoices();
+    }
+    initializeData;
+  }, [isAuthenticated, token]);
 
   const initializeData = () => {
     const storedCategories = categories ;
@@ -519,6 +519,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useData = () => {
   const context = useContext(DataContext);
+  const token = localStorage.getItem('accessToken');
   if (!context) {
     throw new Error('useData must be used within DataProvider');
   }
