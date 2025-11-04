@@ -220,7 +220,7 @@ export default function MenuManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                  {categories.filter((cat: any) => cat.is_active).map((cat: any) => (
+                  {categories .filter((cat: any) => cat.isActive) .sort((a: any, b: any) => a.displayOrder - b.displayOrder) .map((cat: any) => (
                     <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                   ))}
               </SelectContent>
@@ -480,7 +480,9 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
-  const [displayOrder, setDisplayOrder] = useState(category?.displayOrder || 0);
+  const [displayOrder, setDisplayOrder] = useState(
+    category?.displayOrder !== undefined ? category.displayOrder : 0
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {  // <-- async here
     e.preventDefault();
@@ -669,7 +671,7 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
             <SelectValue placeholder="Select main category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.filter((category: any ) => category.is_active).map((category: any) => (
+            {categories.filter((category: any ) => category.isActive).map((category: any) => (
               <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem>
             ))}
           </SelectContent>
@@ -930,7 +932,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.filter((cat: any) => cat.is_active).map((cat: any) => (
+              {categories.filter((cat: any) => cat.isActive).map((cat: any) => (
                 <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
               ))}
             </SelectContent>

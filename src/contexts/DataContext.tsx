@@ -135,8 +135,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getCategories = async () => {
     try {
       const { data } = await axios.get(`${API_BASE_URL}api/restaurant/main-categories/`, { headers });
-      setCategories(data);
-      // console.log("✅ Categories loaded:", data);
+      const mappedCategories = data.map((cat: any) => ({
+        id: String(cat.id),
+        name: cat.name,
+        description: cat.description || "",
+        isActive: cat.is_active ?? true,
+        displayOrder: cat.display_order ?? 0,
+        createdAt: cat.created_at || new Date().toISOString(),
+      }));
+      setCategories(mappedCategories);
+      // console.log("✅ Categories loaded:", mappedCategories);
     } catch (err: any) {
       console.error("❌ Error fetching categories:", err.message);
     }
@@ -147,9 +155,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const payload = {
         name: category.name,
-        description: category.description || "",
-        is_active: category.isActive ?? true,
-        display_order: category.displayOrder ?? 1,
+        description: category.description,
+        is_active: category.isActive,
+        display_order: category.displayOrder,
       };
       const { data } = await axios.post(`${API_BASE_URL}api/restaurant/main-categories/`, payload, { headers });
       await getCategories();
@@ -164,7 +172,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /* ========================= UPDATE CATEGORY (PUT) ========================= */
   const updateCategory = async (id: string, category: Partial<Category>): Promise<Category> => {
     try {
-      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/main-categories/update/${id}/`, category, { headers });
+      const payload = {
+        name: category.name,
+        description: category.description,
+        is_active: category.isActive,
+        display_order: category.displayOrder,
+      };
+      const { data } = await axios.put(`${API_BASE_URL}api/restaurant/main-categories/update/${id}/`, payload, { headers });
       await getCategories();
       return data;
       // console.log("✅ Category updated:", data);
