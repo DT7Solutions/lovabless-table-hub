@@ -48,72 +48,47 @@ export default function MenuManagement() {
 
   const getCategoryName = (cat: any) => {
     if (!cat) return "Unknown Category";
-    return typeof cat === "object" ? cat.name : 
-      categories.find((c) => Number(c.id) === Number(cat))?.name || "Unknown Category";
+    return typeof cat === "object" ? cat.name : categories.find((c) => Number(c.id) === Number(cat))?.name || "Unknown Category";
   };
-
   const getSubCategoryName = (sub: any) => {
     if (!sub) return "Unknown Subcategory";
-    return typeof sub === "object" ? sub.name : 
-      subCategories.find((s) => Number(s.id) === Number(sub))?.name || "Unknown Subcategory";
+    return typeof sub === "object" ? sub.name : subCategories.find((s) => Number(s.id) === Number(sub))?.name || "Unknown Subcategory";
   };
-
   const handleDelete = () => {
     if (!deleteConfirm) return;
-    
     if (deleteConfirm.type === 'category') {
       const itemsInCategory = menuItems.filter(item => item.categoryId === deleteConfirm.id);
       const subCatsInCategory = subCategories.filter(sc => sc.categoryId === deleteConfirm.id);
       if (itemsInCategory.length > 0 || subCatsInCategory.length > 0) {
-        toast({
-          title: "Cannot Delete",
-          description: "This category has items or subcategories. Please delete them first.",
-          variant: "destructive",
-        });
+        toast({ title: "Cannot Delete", description: "This category has items or subcategories. Please delete them first.", variant: "destructive", });
         setDeleteConfirm(null);
         return;
       }
       deleteCategory(deleteConfirm.id);
-      toast({
-        title: "Success",
-        description: "Category deleted successfully",
-      });
+      toast({ title: "Success", description: "Category deleted successfully", });
     } else if (deleteConfirm.type === 'subcategory') {
       const itemsInSubCategory = menuItems.filter(item => item.subCategoryId === deleteConfirm.id);
       if (itemsInSubCategory.length > 0) {
-        toast({
-          title: "Cannot Delete",
-          description: "This subcategory has menu items. Please delete or reassign them first.",
-          variant: "destructive",
-        });
+        toast({ title: "Cannot Delete", description: "This subcategory has menu items. Please delete or reassign them first.", variant: "destructive", });
         setDeleteConfirm(null);
         return;
       }
       deleteSubCategory(deleteConfirm.id);
-      toast({
-        title: "Success",
-        description: "Subcategory deleted successfully",
-      });
+      toast({ title: "Success", description: "Subcategory deleted successfully", });
     } else {
       deleteMenuItem(deleteConfirm.id);
-      toast({
-        title: "Success",
-        description: "Menu item deleted successfully",
-      });
+      toast({ title: "Success", description: "Menu item deleted successfully", });
     }
     setDeleteConfirm(null);
   };
-
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
     setIsAddCategoryDialogOpen(true);
   };
-
   const handleEditSubCategory = (subCategory: SubCategory) => {
     setEditingSubCategory(subCategory);
     setIsAddSubCategoryDialogOpen(true);
   };
-
   const handleEditMenuItem = (item: MenuItem) => {
     setEditingMenuItem(item);
     setIsAddItemDialogOpen(true);
@@ -131,16 +106,11 @@ export default function MenuManagement() {
             setIsAddCategoryDialogOpen(open);
             if (!open) setEditingCategory(null);
           }}>
-            <DialogTrigger asChild>
-              <Button size="lg" variant="outline">
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Add Main Category
-              </Button>
+            <DialogTrigger asChild> 
+              <Button size="lg" variant="outline"> <FolderPlus className="mr-2 h-4 w-4" /> Add Main Category </Button> 
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingCategory ? 'Edit Main Category' : 'Add New Main Category'}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader> <DialogTitle>{editingCategory ? 'Edit Main Category' : 'Add New Main Category'}</DialogTitle> </DialogHeader>
               <CategoryForm 
                 category={editingCategory} 
                 onClose={() => {
@@ -155,16 +125,11 @@ export default function MenuManagement() {
             setIsAddSubCategoryDialogOpen(open);
             if (!open) setEditingSubCategory(null);
           }}>
-            <DialogTrigger asChild>
-              <Button size="lg" variant="outline">
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Add Sub Category
-              </Button>
+            <DialogTrigger asChild> 
+              <Button size="lg" variant="outline"> <FolderPlus className="mr-2 h-4 w-4" /> Add Sub Category </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingSubCategory ? 'Edit Sub Category' : 'Add New Sub Category'}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader> <DialogTitle>{editingSubCategory ? 'Edit Sub Category' : 'Add New Sub Category'}</DialogTitle> </DialogHeader>
               <SubCategoryForm 
                 subCategory={editingSubCategory} 
                 onClose={() => {
@@ -180,15 +145,10 @@ export default function MenuManagement() {
             if (!open) setEditingMenuItem(null);
           }}>
             <DialogTrigger asChild>
-              <Button size="lg">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Menu Item
-              </Button>
+              <Button size="lg"> <Plus className="mr-2 h-4 w-4" /> Add Menu Item </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add New Menu Item'}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader> <DialogTitle>{editingMenuItem ? 'Edit Menu Item' : 'Add New Menu Item'}</DialogTitle> </DialogHeader>
               <MenuItemForm 
                 menuItem={editingMenuItem}
                 onClose={() => {
@@ -244,12 +204,8 @@ export default function MenuManagement() {
 
             {/* View Mode Buttons */}
             <div className="flex gap-2">
-              <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")} >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")} >
-                <List className="h-4 w-4" />
-              </Button>
+              <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")} > <List className="h-4 w-4" /> </Button>
+              <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")} > <Grid className="h-4 w-4" /> </Button>
             </div>
           </div>
         </CardContent>
@@ -259,30 +215,61 @@ export default function MenuManagement() {
       <div className="flex gap-2 overflow-x-auto pb-2">
         <Button
           variant={selectedCategory === "all" ? "default" : "outline"}
-          onClick={() => {setSelectedCategory("all"); setSelectedsubCategory("all"); setSearchQuery("")}}
+          onClick={() => {
+            setSelectedCategory("all");
+            setSelectedsubCategory("all");
+            setSearchQuery("");
+          }}
           className="shrink-0"
         >
           All Items ({menuItems.length})
         </Button>
 
         {categories.map((category: any) => {
-          const subCount = subCategories.filter((sub: any) => { const subMain = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+          const subCount = subCategories.filter((sub: any) => {
+            const subMain = sub.categoryId ?? (sub.main_category !== undefined ? String(sub.main_category) : undefined);
             return subMain !== undefined && Number(subMain) === Number(category.id);
           }).length;
-          const itemCount = menuItems.filter((item: any) => { const itemMain = item.categoryId ?? (item.main_category !== undefined ? String(item.main_category) : undefined);
+
+          const itemCount = menuItems.filter((item: any) => {
+            const itemMain = item.categoryId ?? (item.main_category !== undefined ? String(item.main_category) : undefined);
             return itemMain !== undefined && Number(itemMain) === Number(category.id);
           }).length;
 
           return (
             <div key={category.id} className="relative group shrink-0">
-              <Button  variant={Number(selectedCategory) === Number(category.id) ? "default" : "outline"} onClick={() => {setSelectedCategory(String(category.id)); setSelectedsubCategory("all")} } className="pr-10" >
+              <Button
+                variant={Number(selectedCategory) === Number(category.id) ? "default" : "outline"}
+                onClick={() => {
+                  setSelectedCategory(String(category.id));
+                  setSelectedsubCategory("all");
+                }}
+                className="pr-10"
+              >
                 {category.name} ({itemCount} items / {subCount} sub)
               </Button>
               <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-7 w-7 bg-accent" onClick={(e) => { e.stopPropagation(); setEditingCategory(category); setIsAddCategoryDialogOpen(true); }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 bg-accent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingCategory(category);
+                    setIsAddCategoryDialogOpen(true);
+                  }}
+                >
                   <Edit className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive bg-accent" onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ type: "category", id: category.id }); }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive bg-accent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirm({ type: "category", id: category.id });
+                  }}
+                >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -290,6 +277,40 @@ export default function MenuManagement() {
           );
         })}
       </div>
+
+      {/* Subcategory Tabs - Displayed Below Category Tabs */}
+      {selectedCategory !== "all" && (
+        <div className="flex gap-2 overflow-x-auto mt-2 pb-2">
+          <Button
+            variant={selectedsubCategory === "all" ? "default" : "outline"}
+            onClick={() => setSelectedsubCategory("all")}
+            className="shrink-0"
+          >
+            All Subcategories
+          </Button>
+
+          {subCategories
+            .filter((sub: any) => {
+              if (!sub || !sub.is_active) return false;
+              const subMain =
+                sub.categoryId ??
+                (sub.main_category !== undefined ? String(sub.main_category) : undefined);
+              if (!subMain) return false;
+              return Number(subMain) === Number(selectedCategory);
+            })
+            .sort((a: any, b: any) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)) // optional sorting
+            .map((sub: any) => (
+              <Button
+                key={sub.id}
+                variant={Number(selectedsubCategory) === Number(sub.id) ? "default" : "outline"}
+                onClick={() => setSelectedsubCategory(String(sub.id))}
+                className="shrink-0"
+              >
+                {sub.name}
+              </Button>
+            ))}
+        </div>
+      )}
 
       {/* Menu Items Grid/List */}
       {viewMode === 'grid' ? (
@@ -300,19 +321,13 @@ export default function MenuManagement() {
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    No Image
-                  </div>
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground"> No Image </div>
                 )}
                 <div className="absolute top-2 right-2 flex gap-1">
-                  <Badge variant={item.isAvailable ? 'default' : 'secondary'}>
-                    {item.isAvailable ? 'Available' : 'Out of Stock'}
-                  </Badge>
+                  <Badge variant={item.isAvailable ? 'default' : 'secondary'}> {item.isAvailable ? 'Available' : 'Out of Stock'} </Badge>
                 </div>
                 <div className="absolute top-2 left-2">
-                  <Badge variant={item.isActive ? 'default' : 'destructive'}>
-                    {item.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <Badge variant={item.isActive ? 'default' : 'destructive'}> {item.isActive ? 'Active' : 'Inactive'} </Badge>
                 </div>
               </div>
               <CardContent className="p-5">
@@ -320,28 +335,16 @@ export default function MenuManagement() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-xl">{item.name}</h3>
                     <div className="flex gap-1 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {getCategoryName(item.categoryId)}
-                      </Badge>
-                      {item.subCategoryId && (
-                        <Badge variant="outline" className="text-xs">
-                          {getSubCategoryName(item.subCategoryId)}
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="text-xs"> {getCategoryName(item.categoryId)} </Badge>
+                      {item.subCategoryId && ( <Badge variant="outline" className="text-xs"> {getSubCategoryName(item.subCategoryId)} </Badge> )}
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-4 w-4"onClick={() => handleEditMenuItem(item)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-4 w-4 text-destructive"onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-4 w-4"onClick={() => handleEditMenuItem(item)}> <Edit className="h-4 w-4" /> </Button>
+                    <Button variant="ghost" size="icon" className="h-4 w-4 text-destructive"onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}> <Trash2 className="h-4 w-4" /> </Button>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                  {item.description}
-                </p>
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-3"> {item.description} </p>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold text-primary">{item.currencySymbol || '$'}{item.price}</span>
                   <div className="flex items-center gap-1 text-sm">
@@ -385,9 +388,7 @@ export default function MenuManagement() {
                             {item.image ? (
                               <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                                No img
-                              </div>
+                              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground"> No img </div>
                             )}
                           </div>
                           <div>
@@ -396,14 +397,8 @@ export default function MenuManagement() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge>
-                      </td>
-                      <td className="p-4">
-                        {item.subCategoryId && (
-                          <Badge variant="outline">{getSubCategoryName(item.subCategoryId)}</Badge>
-                        )}
-                      </td>
+                      <td className="p-4"> <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge> </td>
+                      <td className="p-4"> {item.subCategoryId && ( <Badge variant="outline">{getSubCategoryName(item.subCategoryId)}</Badge> )} </td>
                       <td className="p-4 font-semibold">{item.currencySymbol || '₹'}{item.price}</td>
                       <td className="p-4">{item.stockAvailable ?? "N/A"}</td>
                       <td className="p-4">
@@ -419,32 +414,14 @@ export default function MenuManagement() {
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
-                          <Badge variant={item.isAvailable ? 'default' : 'secondary'} className="text-xs">
-                            {item.isAvailable ? 'Avail' : 'Out'}
-                          </Badge>
-                          <Badge variant={item.isActive ? 'default' : 'destructive'} className="text-xs">
-                            {item.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                          <Badge variant={item.isAvailable ? 'default' : 'secondary'} className="text-xs"> {item.isAvailable ? 'Avail' : 'Out'} </Badge>
+                          <Badge variant={item.isActive ? 'default' : 'destructive'} className="text-xs"> {item.isActive ? 'Active' : 'Inactive'} </Badge>
                         </div>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEditMenuItem(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"onClick={() => handleEditMenuItem(item)}> <Edit className="h-4 w-4" /> </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"onClick={() => setDeleteConfirm({ type: 'item', id: item.id })}> <Trash2 className="h-4 w-4" /> </Button>
                         </div>
                       </td>
                     </tr>
@@ -461,9 +438,7 @@ export default function MenuManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the {deleteConfirm?.type}.
-            </AlertDialogDescription>
+            <AlertDialogDescription> This action cannot be undone. This will permanently delete the {deleteConfirm?.type}. </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -480,32 +455,17 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
   const [isActive, setIsActive] = useState(category?.isActive ?? true);
-  const [displayOrder, setDisplayOrder] = useState(
-    category?.displayOrder !== undefined ? category.displayOrder : 0
-  );
+  const [displayOrder, setDisplayOrder] = useState( category?.displayOrder !== undefined ? category.displayOrder : 0 );
 
-  const handleSubmit = async (e: React.FormEvent) => {  // <-- async here
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!name.trim()) {
-      toast({
-        title: "Error",
-        description: "Category name is required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Category name is required", variant: "destructive", });
       return;
     }
-
-    const duplicate = categories.find(
-      cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== category?.id
-    );
-
+    const duplicate = categories.find( cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== category?.id );
     if (duplicate) {
-      toast({
-        title: "Error",
-        description: "A category with this name already exists",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "A category with this name already exists", variant: "destructive", });
       return;
     }
 
@@ -517,10 +477,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
           isActive,
           displayOrder,
         });
-        toast({
-          title: "Success",
-          description: "Category updated successfully",
-        });
+        toast({ title: "Success", description: "Category updated successfully", });
       } else {
         await addCategory({
           name: name.trim(),
@@ -528,18 +485,11 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
           isActive,
           displayOrder,
         });
-        toast({
-          title: "Success",
-          description: "Category added successfully",
-        });
+        toast({ title: "Success", description: "Category added successfully", });
       }
       onClose();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Something went wrong", variant: "destructive", });
     }
   };
 
@@ -547,52 +497,27 @@ function CategoryForm({ category, onClose }: { category?: Category | null, onClo
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="cat-name">Category Name *</Label>
-        <Input 
-          id="cat-name" 
-          placeholder="Enter category name" 
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required 
-        />
+        <Input id="cat-name" placeholder="Enter category name" value={name}onChange={(e) => setName(e.target.value)}required />
       </div>
 
       <div>
         <Label htmlFor="cat-description">Description</Label>
-        <Textarea 
-          id="cat-description" 
-          placeholder="Describe the category"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-        />
+        <Textarea id="cat-description" placeholder="Describe the category"value={description}onChange={(e) => setDescription(e.target.value)}rows={3}/>
       </div>
 
       <div>
         <Label htmlFor="cat-order">Display Order *</Label>
-        <Input 
-          id="cat-order" 
-          type="number" 
-          placeholder="0"
-          value={displayOrder}
-          onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
-          required
-        />
+        <Input id="cat-order" type="number" placeholder="0"value={displayOrder}onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}required/>
         <p className="text-xs text-muted-foreground mt-1">Lower numbers appear first</p>
       </div>
 
       <div className="flex items-center justify-between">
         <Label htmlFor="cat-active">Active Status</Label>
-        <Switch 
-          id="cat-active" 
-          checked={isActive}
-          onCheckedChange={setIsActive}
-        />
+        <Switch id="cat-active" checked={isActive}onCheckedChange={setIsActive}/>
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          {category ? 'Update' : 'Add'} Category
-        </Button>
+        <Button type="submit" className="flex-1"> {category ? 'Update' : 'Add'} Category </Button>
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
       </div>
     </form>
@@ -609,31 +534,19 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!name.trim() || !categoryId) {
-      toast({
-        title: "Error",
-        description: "Subcategory name and main category are required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Subcategory name and main category are required", variant: "destructive", });
       return;
     }
-
     const duplicate = subCategories.find(
       subCat => subCat.name.toLowerCase() === name.toLowerCase() && 
       subCat.categoryId === categoryId &&
       subCat.id !== subCategory?.id
     );
-    
     if (duplicate) {
-      toast({
-        title: "Error",
-        description: "A subcategory with this name already exists in this category",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "A subcategory with this name already exists in this category", variant: "destructive", });
       return;
     }
-
     if (subCategory) {
       updateSubCategory(subCategory.id, {
         categoryId,
@@ -642,10 +555,7 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
         isActive,
         displayOrder,
       });
-      toast({
-        title: "Success",
-        description: "Subcategory updated successfully",
-      });
+      toast({ title: "Success", description: "Subcategory updated successfully", });
     } else {
       addSubCategory({
         categoryId,
@@ -654,10 +564,7 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
         isActive,
         displayOrder,
       });
-      toast({
-        title: "Success",
-        description: "Subcategory added successfully",
-      });
+      toast({ title: "Success", description: "Subcategory added successfully", });
     }
     onClose();
   };
@@ -671,61 +578,34 @@ function SubCategoryForm({ subCategory, onClose }: { subCategory?: SubCategory |
             <SelectValue placeholder="Select main category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.filter((category: any ) => category.isActive).map((category: any) => (
-              <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem>
-            ))}
+            {categories.filter((category: any ) => category.isActive).map((category: any) => ( <SelectItem key={category.id} value={String(category.id)}> {category.name} </SelectItem> ))}
           </SelectContent>
         </Select>
       </div>
 
       <div>
         <Label htmlFor="subcat-name">Sub Category Name *</Label>
-        <Input 
-          id="subcat-name" 
-          placeholder="Enter subcategory name" 
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required 
-        />
+        <Input id="subcat-name" placeholder="Enter subcategory name" value={name}onChange={(e) => setName(e.target.value)}required />
       </div>
 
       <div>
         <Label htmlFor="subcat-description">Description</Label>
-        <Textarea 
-          id="subcat-description" 
-          placeholder="Describe the subcategory"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-        />
+        <Textarea id="subcat-description" placeholder="Describe the subcategory"value={description}onChange={(e) => setDescription(e.target.value)}rows={3}/>
       </div>
 
       <div>
         <Label htmlFor="subcat-order">Display Order *</Label>
-        <Input 
-          id="subcat-order" 
-          type="number" 
-          placeholder="0"
-          value={displayOrder}
-          onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}
-          required
-        />
+        <Input id="subcat-order" type="number" placeholder="0"value={displayOrder}onChange={(e) => setDisplayOrder(parseInt(e.target.value) || 0)}required/>
         <p className="text-xs text-muted-foreground mt-1">Lower numbers appear first</p>
       </div>
 
       <div className="flex items-center justify-between">
         <Label htmlFor="subcat-active">Active Status</Label>
-        <Switch 
-          id="subcat-active" 
-          checked={isActive}
-          onCheckedChange={setIsActive}
-        />
+        <Switch id="subcat-active" checked={isActive}onCheckedChange={setIsActive}/>
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          {subCategory ? 'Update' : 'Add'} Subcategory
-        </Button>
+        <Button type="submit" className="flex-1"> {subCategory ? 'Update' : 'Add'} Subcategory </Button>
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
       </div>
     </form>
@@ -777,12 +657,10 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!name.trim() || !categoryId || !description.trim() || !price) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
-
     const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum <= 0) {
       toast({ title: "Error", description: "Please enter a valid price", variant: "destructive" });
@@ -809,13 +687,14 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
         maxOrderQuantity: maxOrderQuantity ? parseInt(maxOrderQuantity) : null,
         displayOrder: displayOrder ? parseInt(displayOrder) : 0,
       };
-
-      if (imageFile) {
+      // if (imageFile) { itemData.image = imageFile; } else if (menuItem?.image) { itemData.image = menuItem.image; }
+      if (isImageDeleted) {
+        itemData.image = "";
+      } else if (imageFile) {
         itemData.image = imageFile;
-      } else if (menuItem?.image) {
+      } else if (menuItem?.image && imagePreview === menuItem.image) {
         itemData.image = menuItem.image;
       }
-
       if (menuItem) {
         await updateMenuItem(menuItem.id, itemData);
         toast({ title: "Success", description: "Menu item updated successfully" });
@@ -823,7 +702,6 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
         await addMenuItem(itemData);
         toast({ title: "Success", description: "Menu item added successfully" });
       }
-
       onClose();
     } catch (error) {
       console.error("❌ Image upload or submit failed:", error);
@@ -832,9 +710,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
   };
 
   useEffect(() => {
-    if (menuItem && String(menuItem.categoryId) === String(categoryId)) {
-      return;
-    }
+    if (menuItem && String(menuItem.categoryId) === String(categoryId)) { return; }
     setSubCategoryId('');
   }, [categoryId, menuItem]);
 
@@ -867,46 +743,26 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
             )}
           </div>
           <input id="imageInput" type="file" accept="image/*" className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) { const url = URL.createObjectURL(file); setImageFile(file); setImagePreview(url); setImage(url); }
-            }}
+            onChange={(e) => { const file = e.target.files?.[0]; if (file) { const url = URL.createObjectURL(file); setImageFile(file); setImagePreview(url); setImage(url); } }}
           />
         </div>
         <div className="relative">
-          <Input placeholder="Or paste image URL..." value={image}
-            onChange={(e) => { setImage(e.target.value); setImagePreview(e.target.value); }}
-            className="pr-10 rounded-xl"
-          />
-          {image && (
-            <button type="button" className="absolute right-3 top-2.5 text-gray-400 hover:text-red-500 transition" onClick={() => { setImage(""); setImagePreview(""); setImageFile(null); setIsImageDeleted(true); }} > ✕ </button>
-          )}
+          <Input placeholder="Or paste image URL..." value={image} onChange={(e) => { setImage(e.target.value); setImagePreview(e.target.value); }} className="pr-10 rounded-xl" />
+          {image && ( <button type="button" className="absolute right-3 top-2.5 text-gray-400 hover:text-red-500 transition" onClick={() => { setImage(""); setImagePreview(""); setImageFile(null); setIsImageDeleted(true); }} > ✕ </button> )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name">Item Name *</Label>
-          <Input 
-            id="name" 
-            placeholder="Enter item name" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required 
-          />
+          <Input id="name" placeholder="Enter item name" value={name}onChange={(e) => setName(e.target.value)}required />
         </div>
         <div>
           <Label htmlFor="variant">Variant Type</Label>
           <Select value={variantType} onValueChange={setVariantType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select variant" />
-            </SelectTrigger>
+            <SelectTrigger> <SelectValue placeholder="Select variant" /> </SelectTrigger>
             <SelectContent>
-              {variantChoices.map((variant) => (
-                <SelectItem key={variant.value} value={variant.value}>
-                  {variant.label}
-                </SelectItem>
-              ))}
+              {variantChoices.map((variant) => ( <SelectItem key={variant.value} value={variant.value}> {variant.label} </SelectItem> ))}
             </SelectContent>
           </Select>
         </div>
@@ -914,14 +770,7 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
 
       <div>
         <Label htmlFor="description">Description *</Label>
-        <Textarea 
-          id="description" 
-          placeholder="Describe the item"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          required 
-        />
+        <Textarea id="description" placeholder="Describe the item"value={description}onChange={(e) => setDescription(e.target.value)}rows={3}required />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -932,27 +781,17 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.filter((cat: any) => cat.isActive).map((cat: any) => (
-                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-              ))}
+              {categories.filter((cat: any) => cat.isActive).map((cat: any) => ( <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem> ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <Label htmlFor="subcategory">Sub Category</Label>
-          <Select 
-            value={subCategoryId} 
-            onValueChange={setSubCategoryId}
-            disabled={!categoryId || filteredSubCategories.length === 0}
-          >
+          <Select value={subCategoryId} onValueChange={setSubCategoryId}disabled={!categoryId || filteredSubCategories.length === 0}>
             <SelectTrigger>
               <SelectValue placeholder="Select subcategory" />
             </SelectTrigger>
-            <SelectContent>
-              {filteredSubCategories.map((subCat: any) => (
-                <SelectItem key={subCat.id} value={String(subCat.id)}>{subCat.name}</SelectItem>
-              ))}
-            </SelectContent>
+            <SelectContent> {filteredSubCategories.map((subCat: any) => ( <SelectItem key={subCat.id} value={String(subCat.id)}>{subCat.name}</SelectItem> ))} </SelectContent>
           </Select>
         </div>
       </div>
@@ -964,51 +803,23 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
-            <SelectContent>
-              {currencyChoices.map((currency) => (
-                <SelectItem key={currency.value} value={currency.value}>
-                  {currency.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <SelectContent> {currencyChoices.map((currency) => ( <SelectItem key={currency.value} value={currency.value}>{currency.label}</SelectItem> ))} </SelectContent>
           </Select>
         </div>
         <div>
           <Label htmlFor="price">Price *</Label>
-          <Input 
-            id="price" 
-            type="number" 
-            step="0.01"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required 
-          />
+          <Input id="price" type="number" step="0.01"placeholder="0.00"value={price}onChange={(e) => setPrice(e.target.value)}required />
         </div>
         <div>
           <Label htmlFor="tax">Tax Percentage</Label>
-          <Input 
-            id="tax" 
-            type="number" 
-            step="0.01"
-            placeholder="0.00"
-            value={taxPercentage}
-            onChange={(e) => setTaxPercentage(e.target.value)}
-          />
+          <Input id="tax" type="number" step="0.01"placeholder="0.00"value={taxPercentage}onChange={(e) => setTaxPercentage(e.target.value)}/>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label htmlFor="quantity-val">Quantity Value</Label>
-          <Input 
-            id="quantity-val" 
-            type="number"
-            step="0.01"
-            placeholder="1"
-            value={quantityValue}
-            onChange={(e) => setQuantityValue(e.target.value)}
-          />
+          <Input id="quantity-val" type="number"step="0.01"placeholder="1"value={quantityValue}onChange={(e) => setQuantityValue(e.target.value)}/>
         </div>
         <div>
           <Label htmlFor="quantity-unit">Quantity Unit *</Label>
@@ -1016,92 +827,46 @@ function MenuItemForm({ menuItem, onClose }: { menuItem?: MenuItem | null, onClo
             <SelectTrigger>
               <SelectValue placeholder="Select unit" />
             </SelectTrigger>
-            <SelectContent>
-              {unitChoices.map((unit) => (
-                <SelectItem key={unit.value} value={unit.value}>
-                  {unit.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <SelectContent> {unitChoices.map((unit) => ( <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem> ))} </SelectContent>
           </Select>
         </div>
         <div>
           <Label htmlFor="prepTime">Prep Time (mins)</Label>
-          <Input 
-            id="prepTime" 
-            type="number" 
-            placeholder="15"
-            value={prepTime}
-            onChange={(e) => setPrepTime(e.target.value)}
-          />
+          <Input id="prepTime" type="number" placeholder="15"value={prepTime}onChange={(e) => setPrepTime(e.target.value)}/>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label htmlFor="stock">Stock Available</Label>
-          <Input 
-            id="stock" 
-            type="number" 
-            placeholder="0"
-            value={stockAvailable}
-            onChange={(e) => setStockAvailable(e.target.value)}
-          />
+          <Input id="stock" type="number" placeholder="0"value={stockAvailable}onChange={(e) => setStockAvailable(e.target.value)}/>
         </div>
         <div>
           <Label htmlFor="max-order">Max Order Qty</Label>
-          <Input 
-            id="max-order" 
-            type="number" 
-            placeholder="No limit"
-            value={maxOrderQuantity}
-            onChange={(e) => setMaxOrderQuantity(e.target.value)}
-          />
+          <Input id="max-order" type="number" placeholder="No limit"value={maxOrderQuantity}onChange={(e) => setMaxOrderQuantity(e.target.value)}/>
         </div>
         <div>
           <Label htmlFor="display-order">Display Order *</Label>
-          <Input 
-            id="display-order" 
-            type="number" 
-            placeholder="0"
-            value={displayOrder}
-            onChange={(e) => setDisplayOrder(e.target.value)}
-            required
-          />
+          <Input id="display-order" type="number" placeholder="0"value={displayOrder}onChange={(e) => setDisplayOrder(e.target.value)}required/>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 pt-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="active">Product Active</Label>
-          <Switch 
-            id="active" 
-            checked={isActive}
-            onCheckedChange={setIsActive}
-          />
+          <Switch id="active" checked={isActive}onCheckedChange={setIsActive}/>
         </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="available">Availability</Label>
-          <Switch 
-            id="available" 
-            checked={isAvailable}
-            onCheckedChange={setIsAvailable}
-          />
+          <Switch id="available" checked={isAvailable}onCheckedChange={setIsAvailable}/>
         </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="featured">Featured</Label>
-          <Switch 
-            id="featured" 
-            checked={isFeatured}
-            onCheckedChange={setIsFeatured}
-          />
+          <Switch id="featured" checked={isFeatured}onCheckedChange={setIsFeatured}/>
         </div>
       </div>
-
       <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          {menuItem ? 'Update' : 'Save'} Item
-        </Button>
+        <Button type="submit" className="flex-1"> {menuItem ? 'Update' : 'Save'} Item </Button>
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
       </div>
     </form>
